@@ -1,0 +1,100 @@
+package dns
+
+import (
+	m "github.com/go-void/portal/internal/types/bitmasks"
+	"github.com/go-void/portal/internal/types/opcode"
+	"github.com/go-void/portal/internal/types/rcode"
+	"github.com/go-void/portal/internal/types/rr"
+)
+
+// This file implements messages described in 4. MESSAGES
+// See https://datatracker.ietf.org/doc/html/rfc1035#section-4
+
+type Message struct {
+	Header     MessageHeader
+	Question   []Question
+	Answer     []rr.RR
+	Authority  []rr.RR
+	Additional []rr.RR
+}
+
+// MessageHeader describes the header data of a message
+// See https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
+type MessageHeader struct {
+	ID                 uint16      // ID
+	IsQuery            bool        // QR
+	OpCode             opcode.Code // OPCODE
+	Authoritative      bool        // AA
+	Truncated          bool        // TC
+	RecursionDesired   bool        // RD
+	RecursionAvailable bool        // RA
+	Zero               bool        // Z
+	RCode              rcode.Code  // RCODE
+	QDCount            uint16      // QDCOUNT
+	ANCount            uint16      // ANCOUNT
+	NSCount            uint16      // NSCOUNT
+	ARCount            uint16      // ARCOUNT
+}
+
+// RawHeader describes the raw header data of a message
+// directly from the "wire". The data gets unpacked by
+// splitting the message into six 16 bit (2 octet)
+// chunks. The second chunk "flags" carries data like
+// QR, OPCODE, etc. which gets split up further by bit
+// masks
+type RawHeader struct {
+	ID      uint16 // ID
+	Flags   uint16 // Various flags, see above
+	QDCount uint16 // QDCOUNT
+	ANCount uint16 // ANCOUNT
+	NSCount uint16 // NSCOUNT
+	ARCount uint16 // ARCOUNT
+}
+
+// ToHeader converts a raw header to a header by applying
+// bitmasks to split DNS header flags
+func (h *RawHeader) ToHeader() MessageHeader {
+	return MessageHeader{
+		ID:                 h.ID,
+		IsQuery:            h.Flags&m.QR == 0,
+		OpCode:             opcode.Code((h.Flags >> 11) & 0xF),
+		Authoritative:      h.Flags&m.AA != 0,
+		Truncated:          h.Flags&m.TC != 0,
+		RecursionDesired:   h.Flags&m.RD != 0,
+		RecursionAvailable: h.Flags&m.RA != 0,
+		Zero:               h.Flags&m.Z != 0,
+		RCode:              rcode.Code(h.Flags & 0xF),
+		QDCount:            h.QDCount,
+		ANCount:            h.ANCount,
+		NSCount:            h.NSCount,
+		ARCount:            h.ARCount,
+	}
+}
+
+// AddQuestion adds a question to the question section
+// of a DNS message
+func (m *Message) AddQuestion(question Question) {
+	m.Question = append(m.Question, question)
+	m.Header.QDCount++
+}
+
+// AddAnswer adds a resource record to the answer section
+// of a DNS message
+func (m *Message) AddAnswer(record rr.RR) {
+	m.Answer = append(m.Answer, record)
+	m.Header.ANCount++
+}
+
+// AddAuthority adds a resource record to the
+// authoritative name server section
+func (m *Message) AddAuthority(record rr.RR) {
+	m.Answer = append(m.Authority, record)
+	m.Header.NSCount++
+}
+
+// AddAdditional adds a resource record to the
+// additional section
+func (m *Message) AddAdditional(record rr.RR) {
+	m.Additional = append(m.Additional, record)
+	m.Header.ARCount++
+}
