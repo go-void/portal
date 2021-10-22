@@ -40,6 +40,10 @@ func (rr *SOA) String() string {
 	return ""
 }
 
-func (rr *SOA) Unwrap(data []byte, offset int) (int, error) {
+func (rr *SOA) Unpack(data []byte, offset int) (int, error) {
+	return offset, nil
+}
+
+func (rr *SOA) Pack(data []byte, offset int) (int, error) {
 	return offset, nil
 }

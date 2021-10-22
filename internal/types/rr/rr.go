@@ -34,8 +34,11 @@ type RR interface {
 	// String returns the representation of any RR as text
 	String() string
 
-	// Unwrap unwraps the RDATA
-	Unwrap([]byte, int) (int, error)
+	// Unpack unpacks the RDATA
+	Unpack([]byte, int) (int, error)
+
+	// Pack packs the RDATA
+	Pack([]byte, int) (int, error)
 }
 
 // RRHeader describes header data of a resource record.

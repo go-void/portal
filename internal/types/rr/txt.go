@@ -31,6 +31,10 @@ func (rr *TXT) String() string {
 	return ""
 }
 
-func (rr *TXT) Unwrap(data []byte, offset int) (int, error) {
+func (rr *TXT) Unpack(data []byte, offset int) (int, error) {
+	return offset, nil
+}
+
+func (rr *TXT) Pack(data []byte, offset int) (int, error) {
 	return offset, nil
 }

@@ -35,6 +35,10 @@ func (rr *A) String() string {
 	return rr.Address.String()
 }
 
-func (rr *A) Unwrap(data []byte, offset int) (int, error) {
+func (rr *A) Unpack(data []byte, offset int) (int, error) {
+	return offset, nil
+}
+
+func (rr *A) Pack(data []byte, offset int) (int, error) {
 	return offset, nil
 }

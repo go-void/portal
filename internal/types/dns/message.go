@@ -71,6 +71,44 @@ func (h *RawHeader) ToHeader() MessageHeader {
 	}
 }
 
+func (h *MessageHeader) ToRaw() RawHeader {
+	var rh RawHeader
+
+	rh.ID = h.ID
+	rh.Flags = uint16(h.OpCode)<<11 | uint16(h.RCode&0xF)
+
+	if h.IsQuery {
+		rh.Flags |= m.QR
+	}
+
+	if h.Authoritative {
+		rh.Flags |= m.AA
+	}
+
+	if h.Truncated {
+		rh.Flags |= m.TC
+	}
+
+	if h.RecursionDesired {
+		rh.Flags |= m.RD
+	}
+
+	if h.RecursionAvailable {
+		rh.Flags |= m.RA
+	}
+
+	if h.Zero {
+		rh.Flags |= m.Z
+	}
+
+	rh.QDCount = h.QDCount
+	rh.ANCount = h.ANCount
+	rh.NSCount = h.NSCount
+	rh.ARCount = h.ARCount
+
+	return rh
+}
+
 // AddQuestion adds a question to the question section
 // of a DNS message
 func (m *Message) AddQuestion(question Question) {

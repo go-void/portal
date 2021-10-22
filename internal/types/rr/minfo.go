@@ -39,6 +39,10 @@ func (rr *MINFO) String() string {
 	return ""
 }
 
-func (rr *MINFO) Unwrap(data []byte, offset int) (int, error) {
+func (rr *MINFO) Unpack(data []byte, offset int) (int, error) {
+	return offset, nil
+}
+
+func (rr *MINFO) Pack(data []byte, offset int) (int, error) {
 	return offset, nil
 }

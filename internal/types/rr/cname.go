@@ -31,6 +31,10 @@ func (rr *CNAME) String() string {
 	return ""
 }
 
-func (rr *CNAME) Unwrap(data []byte, offset int) (int, error) {
+func (rr *CNAME) Unpack(data []byte, offset int) (int, error) {
+	return offset, nil
+}
+
+func (rr *CNAME) Pack(data []byte, offset int) (int, error) {
 	return offset, nil
 }

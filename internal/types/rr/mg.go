@@ -32,6 +32,10 @@ func (rr *MG) String() string {
 	return ""
 }
 
-func (rr *MG) Unwrap(data []byte, offset int) (int, error) {
+func (rr *MG) Unpack(data []byte, offset int) (int, error) {
+	return offset, nil
+}
+
+func (rr *MG) Pack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
