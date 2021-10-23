@@ -50,6 +50,14 @@ func (s *DefaultStore) Get(name string, class, t uint16) (rr.RR, error) {
 		return nil, err
 	}
 
+	record.SetHeader(rr.RRHeader{
+		Name:     name,
+		Class:    class,
+		Type:     t,
+		TTL:      3600,
+		RDLength: 4, // FIXME (Techassi): Don't make this fixed
+	})
+
 	err = record.SetData(data)
 	if err != nil {
 		return nil, err

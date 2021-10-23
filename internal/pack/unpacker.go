@@ -13,7 +13,7 @@ import (
 
 var (
 	ErrNoBody          = errors.New("no body data")
-	ErrUnpackpingQName = errors.New("error while unwrapping QNAME")
+	ErrUnpackpingQName = errors.New("error while unpacking QNAME")
 )
 
 type Unpacker interface {

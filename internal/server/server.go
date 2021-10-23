@@ -180,7 +180,10 @@ func (s *Server) init() error {
 
 	// Init new default interface implementations
 	s.Resolver = resolver.NewDefaultResolver()
+
 	s.Unpacker = pack.NewDefaultUnpacker()
+	s.Packer = pack.NewDefaultPacker()
+
 	s.Reader = reader.NewDefault(s.OOBSize)
 	s.Store = store.NewDefaultStore()
 
