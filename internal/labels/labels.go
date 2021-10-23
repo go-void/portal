@@ -1,13 +1,13 @@
-package utils
+package labels
 
 import (
 	"strings"
 )
 
-// LabelsFromRoot returns a slice of labels of a domain
+// FromRoot returns a slice of labels of a domain
 // name originating from root.
 // Example: example.com. => . -> com -> example
-func LabelsFromRoot(name string) []string {
+func FromRoot(name string) []string {
 	var o []string
 	var l = len(name)
 	var c = l
@@ -32,9 +32,9 @@ func LabelsFromRoot(name string) []string {
 	return o
 }
 
-// LabelsFromBottom returns a slice of labels of a domain
+// FromBottom returns a slice of labels of a domain
 // name bottom up. Example: example.com. => example -> com -> .
-func LabelsFromBottom(name string) []string {
+func FromBottom(name string) []string {
 	var o []string
 
 	if name == "" || name == "." {
