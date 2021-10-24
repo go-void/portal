@@ -1,5 +1,7 @@
 package rr
 
+import "github.com/go-void/portal/internal/wire"
+
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.12
 type PTR struct {
 	H        RRHeader
@@ -35,6 +37,6 @@ func (rr *PTR) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *PTR) Pack(data []byte, offset int) (int, error) {
-	return offset, nil
+func (rr *PTR) Pack(buf []byte, offset int) (int, error) {
+	return wire.PackDomainName(rr.PTRDName, buf, offset)
 }

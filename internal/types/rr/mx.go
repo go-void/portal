@@ -1,5 +1,7 @@
 package rr
 
+import "github.com/go-void/portal/internal/wire"
+
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.9
 type MX struct {
 	H          RRHeader
@@ -43,6 +45,11 @@ func (rr *MX) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *MX) Pack(data []byte, offset int) (int, error) {
-	return offset, nil
+func (rr *MX) Pack(buf []byte, offset int) (int, error) {
+	offset, err := wire.PackUint16(rr.Preference, buf, offset)
+	if err != nil {
+		return offset, err
+	}
+
+	return wire.PackDomainName(rr.Exchange, buf, offset)
 }

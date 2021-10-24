@@ -36,5 +36,6 @@ func (rr *NULL) Unpack(data []byte, offset int) (int, error) {
 }
 
 func (rr *NULL) Pack(data []byte, offset int) (int, error) {
+	// TODO (Techassi): Anything can be put in here. How do we pack that?
 	return offset, nil
 }

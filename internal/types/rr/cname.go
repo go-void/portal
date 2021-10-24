@@ -1,5 +1,7 @@
 package rr
 
+import "github.com/go-void/portal/internal/wire"
+
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.1
 type CNAME struct {
 	H      RRHeader
@@ -35,6 +37,6 @@ func (rr *CNAME) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *CNAME) Pack(data []byte, offset int) (int, error) {
-	return offset, nil
+func (rr *CNAME) Pack(buf []byte, offset int) (int, error) {
+	return wire.PackDomainName(rr.Target, buf, offset)
 }

@@ -1,5 +1,7 @@
 package rr
 
+import "github.com/go-void/portal/internal/wire"
+
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.7 (EXPERIMENTAL)
 type MINFO struct {
 	H        RRHeader
@@ -43,6 +45,11 @@ func (rr *MINFO) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *MINFO) Pack(data []byte, offset int) (int, error) {
-	return offset, nil
+func (rr *MINFO) Pack(buf []byte, offset int) (int, error) {
+	offset, err := wire.PackDomainName(rr.RMailBox, buf, offset)
+	if err != nil {
+		return offset, err
+	}
+
+	return wire.PackDomainName(rr.EMailBox, buf, offset)
 }

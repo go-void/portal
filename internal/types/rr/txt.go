@@ -1,5 +1,9 @@
 package rr
 
+import "github.com/go-void/portal/internal/wire"
+
+// TODO (Techassi): Figure out if a TXT record can hold multiple strings
+
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.14
 type TXT struct {
 	H    RRHeader
@@ -35,6 +39,6 @@ func (rr *TXT) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *TXT) Pack(data []byte, offset int) (int, error) {
-	return offset, nil
+func (rr *TXT) Pack(buf []byte, offset int) (int, error) {
+	return wire.PackCharacterString(rr.Data, buf, offset)
 }
