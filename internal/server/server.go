@@ -185,10 +185,9 @@ func (s *Server) init() error {
 	s.Packer = pack.NewDefaultPacker()
 
 	s.Reader = reader.NewDefault(s.OOBSize)
-	s.Store = store.NewDefaultStore()
-
 	s.AcceptFunc = DefaultAcceptFunc
 
+	s.Store = store.NewDefaultStore()
 	s.usesCache = s.Store.UsesCache()
 
 	err := s.Store.Set("google.de", 1, 1, net.ParseIP("142.250.186.35"))
@@ -244,6 +243,7 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	var err error
 	var ok bool
 
+	// TODO (Techassi): Just pass the question instead of the individual parameters
 	// First look in cache if we get a hit
 	if s.usesCache {
 		record, ok = s.Cache.Get(
@@ -297,12 +297,13 @@ func (s *Server) readUDP() ([]byte, dns.Session, error) {
 	return rm[:mn], session, nil
 }
 
+// writeUDPP writes a message (byte slice) back to the requesting client
 func (s *Server) writeUDP(b []byte, session dns.Session) {
 	_, err := s.UDPListener.WriteToUDP(b, session.Address)
 	if err != nil {
 		// Handle
 	}
-	s.messageList.Put(b)
+	s.messageList.Put(&b)
 }
 
 // isRunning returns if the server instance is running

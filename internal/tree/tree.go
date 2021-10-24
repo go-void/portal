@@ -5,7 +5,7 @@ package tree
 import (
 	"errors"
 
-	"github.com/go-void/portal/internal/utils"
+	"github.com/go-void/portal/internal/labels"
 )
 
 var (
@@ -46,7 +46,7 @@ func (t *Tree) Walk(name string) ([]Node, error) {
 	var (
 		current = t.root
 		nodes   = []Node{}
-		names   = utils.LabelsFromRoot(name)
+		names   = labels.FromRoot(name)
 	)
 
 	for _, name := range names {
@@ -71,7 +71,7 @@ func (t *Tree) Walk(name string) ([]Node, error) {
 // don't exist yet
 func (t *Tree) Populate(name string) (Node, error) {
 	var current = t.root
-	var names = utils.LabelsFromRoot(name)
+	var names = labels.FromRoot(name)
 
 	for _, name := range names {
 		if name == "" || name == "." {

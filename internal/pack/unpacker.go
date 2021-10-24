@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
-	"github.com/go-void/portal/internal/utils"
 )
 
 var (
@@ -145,8 +144,8 @@ func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question,
 		return dns.Question{}, offset, err
 	}
 
-	t, offset := utils.UnpackUint16(data, offset)
-	c, offset := utils.UnpackUint16(data, offset)
+	t, offset := UnpackUint16(data, offset)
+	c, offset := UnpackUint16(data, offset)
 
 	q := dns.Question{
 		Name:  qname,
@@ -267,19 +266,19 @@ func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.RRHeader, 
 	header.Name = name
 
 	// Unpack TYPE
-	rrType, offset := utils.UnpackUint16(data, offset)
+	rrType, offset := UnpackUint16(data, offset)
 	header.Type = rrType
 
 	// Unpack CLASS
-	rrClass, offset := utils.UnpackUint16(data, offset)
+	rrClass, offset := UnpackUint16(data, offset)
 	header.Class = rrClass
 
 	// Unpack TTL
-	rrTTL, offset := utils.UnpackUint32(data, offset)
+	rrTTL, offset := UnpackUint32(data, offset)
 	header.TTL = rrTTL
 
 	// Unpack RDLENGTH
-	rdlength, offset := utils.UnpackUint16(data, offset)
+	rdlength, offset := UnpackUint16(data, offset)
 	header.RDLength = rdlength
 
 	return header, offset, nil

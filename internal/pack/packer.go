@@ -1,11 +1,9 @@
 package pack
 
 import (
-	"fmt"
-
+	"github.com/go-void/portal/internal/labels"
 	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
-	"github.com/go-void/portal/internal/utils"
 )
 
 // Packer packs DNS messages from a struct into the
@@ -83,32 +81,32 @@ func (p *DefaultPacker) Pack(message dns.Message) ([]byte, error) {
 func (p *DefaultPacker) PackHeader(header dns.MessageHeader, buf []byte, offset int) (int, error) {
 	rh := header.ToRaw()
 
-	offset, err := utils.PackUint16(rh.ID, buf, offset)
+	offset, err := PackUint16(rh.ID, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(rh.Flags, buf, offset)
+	offset, err = PackUint16(rh.Flags, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(rh.QDCount, buf, offset)
+	offset, err = PackUint16(rh.QDCount, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(rh.ANCount, buf, offset)
+	offset, err = PackUint16(rh.ANCount, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(rh.NSCount, buf, offset)
+	offset, err = PackUint16(rh.NSCount, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(rh.ARCount, buf, offset)
+	offset, err = PackUint16(rh.ARCount, buf, offset)
 	return offset, err
 }
 
@@ -119,17 +117,17 @@ func (p *DefaultPacker) PackQuestion(question dns.Question, buf []byte, offset i
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(question.Type, buf, offset)
+	offset, err = PackUint16(question.Type, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(question.Class, buf, offset)
+	offset, err = PackUint16(question.Class, buf, offset)
 	return offset, err
 }
 
 func (p *DefaultPacker) PackName(name string, buf []byte, offset int) (int, error) {
-	labels := utils.LabelsFromBottom(name)
+	labels := labels.FromBottom(name)
 
 	for i := 0; i < len(labels); i++ {
 		label := labels[i]
@@ -176,8 +174,6 @@ func (p *DefaultPacker) PackRR(rr rr.RR, buf []byte, offset int) (int, error) {
 		return offset, err
 	}
 
-	fmt.Println(rr.Header())
-
 	offset, err = rr.Pack(buf, offset)
 	return offset, err
 }
@@ -190,21 +186,21 @@ func (p *DefaultPacker) PackRRHeader(header *rr.RRHeader, buf []byte, offset int
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(header.Type, buf, offset)
+	offset, err = PackUint16(header.Type, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(header.Class, buf, offset)
+	offset, err = PackUint16(header.Class, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint32(header.TTL, buf, offset)
+	offset, err = PackUint32(header.TTL, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = utils.PackUint16(header.RDLength, buf, offset)
+	offset, err = PackUint16(header.RDLength, buf, offset)
 	return offset, err
 }
