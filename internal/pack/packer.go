@@ -1,9 +1,9 @@
 package pack
 
 import (
-	"github.com/go-void/portal/internal/labels"
 	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
+	"github.com/go-void/portal/internal/wire"
 )
 
 // Packer packs DNS messages from a struct into the
@@ -20,8 +20,6 @@ type Packer interface {
 	// PackQuestion packs a question by converting
 	// the provided question to the wire format
 	PackQuestion(dns.Question, []byte, int) (int, error)
-
-	PackName(string, []byte, int) (int, error)
 
 	// PackRRList packs a slice of resource records
 	// by converting the provided records to the
@@ -51,6 +49,7 @@ func NewDefaultPacker() Packer {
 // Packs packs a single DNS message by converting the provided
 // message to the wire format
 func (p *DefaultPacker) Pack(message dns.Message) ([]byte, error) {
+	// FIXME (Techassi): Figure out how we can pre-allocate the buf with the correct length / size
 	var buf = make([]byte, 256*4)
 
 	offset, err := p.PackHeader(message.Header, buf, 0)
@@ -81,72 +80,49 @@ func (p *DefaultPacker) Pack(message dns.Message) ([]byte, error) {
 func (p *DefaultPacker) PackHeader(header dns.MessageHeader, buf []byte, offset int) (int, error) {
 	rh := header.ToRaw()
 
-	offset, err := PackUint16(rh.ID, buf, offset)
+	offset, err := wire.PackUint16(rh.ID, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(rh.Flags, buf, offset)
+	offset, err = wire.PackUint16(rh.Flags, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(rh.QDCount, buf, offset)
+	offset, err = wire.PackUint16(rh.QDCount, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(rh.ANCount, buf, offset)
+	offset, err = wire.PackUint16(rh.ANCount, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(rh.NSCount, buf, offset)
+	offset, err = wire.PackUint16(rh.NSCount, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(rh.ARCount, buf, offset)
+	offset, err = wire.PackUint16(rh.ARCount, buf, offset)
 	return offset, err
 }
 
 // PackQuestion packs a question by converting the provided question to the wire format
 func (p *DefaultPacker) PackQuestion(question dns.Question, buf []byte, offset int) (int, error) {
-	offset, err := p.PackName(question.Name, buf, offset)
+	offset, err := wire.PackDomainName(question.Name, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(question.Type, buf, offset)
+	offset, err = wire.PackUint16(question.Type, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(question.Class, buf, offset)
+	offset, err = wire.PackUint16(question.Class, buf, offset)
 	return offset, err
-}
-
-func (p *DefaultPacker) PackName(name string, buf []byte, offset int) (int, error) {
-	labels := labels.FromBottom(name)
-
-	for i := 0; i < len(labels); i++ {
-		label := labels[i]
-		switch label {
-		case "", ".":
-			buf[offset] = 0x0
-			offset++
-		default:
-			buf[offset] = uint8(len(label))
-			offset++
-
-			for l := 0; l < len(label); l++ {
-				buf[offset] = label[l]
-				offset++
-			}
-		}
-	}
-
-	return offset, nil
 }
 
 // PackRRList packs a slice of resource records by converting the provided records to
@@ -181,26 +157,26 @@ func (p *DefaultPacker) PackRR(rr rr.RR, buf []byte, offset int) (int, error) {
 // PackRRHeader packs a resource record header by converting the provided data
 // to the wire format
 func (p *DefaultPacker) PackRRHeader(header *rr.RRHeader, buf []byte, offset int) (int, error) {
-	offset, err := p.PackName(header.Name, buf, offset)
+	offset, err := wire.PackDomainName(header.Name, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(header.Type, buf, offset)
+	offset, err = wire.PackUint16(header.Type, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(header.Class, buf, offset)
+	offset, err = wire.PackUint16(header.Class, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint32(header.TTL, buf, offset)
+	offset, err = wire.PackUint32(header.TTL, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = PackUint16(header.RDLength, buf, offset)
+	offset, err = wire.PackUint16(header.RDLength, buf, offset)
 	return offset, err
 }
