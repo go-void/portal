@@ -15,7 +15,7 @@ type Packer interface {
 
 	// PackHeader packs header data by converting
 	// the provided header to the wire format
-	PackHeader(dns.MessageHeader, []byte, int) (int, error)
+	PackHeader(dns.Header, []byte, int) (int, error)
 
 	// PackQuestion packs a question by converting
 	// the provided question to the wire format
@@ -34,7 +34,7 @@ type Packer interface {
 	// PackRRHeader packs a resource record header
 	// by converting the provided data to the
 	// wire format
-	PackRRHeader(*rr.RRHeader, []byte, int) (int, error)
+	PackRRHeader(*rr.Header, []byte, int) (int, error)
 }
 
 // DefaultPacker is the default packer implementation
@@ -77,7 +77,7 @@ func (p *DefaultPacker) Pack(message dns.Message) ([]byte, error) {
 }
 
 // PackHeader packs header data by converting the provided header to the wire format
-func (p *DefaultPacker) PackHeader(header dns.MessageHeader, buf []byte, offset int) (int, error) {
+func (p *DefaultPacker) PackHeader(header dns.Header, buf []byte, offset int) (int, error) {
 	rh := header.ToRaw()
 
 	offset, err := wire.PackUint16(rh.ID, buf, offset)
@@ -156,7 +156,7 @@ func (p *DefaultPacker) PackRR(rr rr.RR, buf []byte, offset int) (int, error) {
 
 // PackRRHeader packs a resource record header by converting the provided data
 // to the wire format
-func (p *DefaultPacker) PackRRHeader(header *rr.RRHeader, buf []byte, offset int) (int, error) {
+func (p *DefaultPacker) PackRRHeader(header *rr.Header, buf []byte, offset int) (int, error) {
 	offset, err := wire.PackDomainName(header.Name, buf, offset)
 	if err != nil {
 		return offset, err

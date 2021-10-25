@@ -11,16 +11,16 @@ import (
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-4
 
 type Message struct {
-	Header     MessageHeader
+	Header     Header
 	Question   []Question
 	Answer     []rr.RR
 	Authority  []rr.RR
 	Additional []rr.RR
 }
 
-// MessageHeader describes the header data of a message
+// Header describes the header data of a message
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
-type MessageHeader struct {
+type Header struct {
 	ID                 uint16      // ID
 	IsQuery            bool        // QR
 	OpCode             opcode.Code // OPCODE
@@ -53,8 +53,8 @@ type RawHeader struct {
 
 // ToHeader converts a raw header to a header by applying
 // bitmasks to split DNS header flags
-func (h *RawHeader) ToHeader() MessageHeader {
-	return MessageHeader{
+func (h *RawHeader) ToHeader() Header {
+	return Header{
 		ID:                 h.ID,
 		IsQuery:            h.Flags&m.QR == 0,
 		OpCode:             opcode.Code((h.Flags >> 11) & 0xF),
@@ -71,14 +71,14 @@ func (h *RawHeader) ToHeader() MessageHeader {
 	}
 }
 
-func (h *MessageHeader) ToRaw() RawHeader {
+func (h *Header) ToRaw() RawHeader {
 	var rh RawHeader
 
 	rh.ID = h.ID
 	rh.Flags = uint16(h.OpCode)<<11 | uint16(h.RCode&0xF)
 
 	if h.IsQuery {
-		rh.Flags |= m.QR
+		rh.Flags &= m.QR
 	}
 
 	if h.Authoritative {

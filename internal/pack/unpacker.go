@@ -19,11 +19,11 @@ var (
 type Unpacker interface {
 	// Unpack unwraps a single complete DNS message from the
 	// received byte slice
-	Unpack(dns.MessageHeader, []byte, int) (dns.Message, error)
+	Unpack(dns.Header, []byte, int) (dns.Message, error)
 
 	// UnpackHeader unwraps header data from the received
 	// byte slice
-	UnpackHeader([]byte) (dns.MessageHeader, int, error)
+	UnpackHeader([]byte) (dns.Header, int, error)
 
 	// UnpackQuestion unwraps a question from the received
 	// byte slice
@@ -39,7 +39,7 @@ type Unpacker interface {
 
 	// UnpackRRHeader unwraps header data of a resource
 	// record from the received byte slice
-	UnpackRRHeader([]byte, int) (rr.RRHeader, int)
+	UnpackRRHeader([]byte, int) (rr.Header, int)
 }
 
 // DefaultWrapper describes the default wrapper to unwrap / wrap
@@ -58,7 +58,7 @@ func NewDefaultUnpacker() Unpacker {
 }
 
 // Unpack unwraps a single complete DNS message from the received byte slice
-func (p *DefaultUnpacker) Unpack(header dns.MessageHeader, data []byte, offset int) (dns.Message, error) {
+func (p *DefaultUnpacker) Unpack(header dns.Header, data []byte, offset int) (dns.Message, error) {
 	m := dns.Message{}
 	m.Header = header
 
@@ -119,13 +119,13 @@ func (p *DefaultUnpacker) Unpack(header dns.MessageHeader, data []byte, offset i
 }
 
 // UnpackHeader unwraps header data from the received byte slice
-func (p *DefaultUnpacker) UnpackHeader(data []byte) (dns.MessageHeader, int, error) {
+func (p *DefaultUnpacker) UnpackHeader(data []byte) (dns.Header, int, error) {
 	p.reader.Reset(data)
 
 	rh := new(dns.RawHeader)
 	err := binary.Read(p.reader, binary.BigEndian, rh)
 	if err != nil {
-		return dns.MessageHeader{}, 0, err
+		return dns.Header{}, 0, err
 	}
 
 	return rh.ToHeader(), binary.Size(rh), nil
@@ -194,8 +194,8 @@ func (p *DefaultUnpacker) UnpackRR(data []byte, offset int) (rr.RR, int, error) 
 }
 
 // UnpackRRHeader unwraps header data of a resource record from the received byte slice
-func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.RRHeader, int) {
-	header := rr.RRHeader{}
+func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.Header, int) {
+	header := rr.Header{}
 
 	// Unpack NAME
 	name, offset := wire.UnpackDomainName(data, offset)

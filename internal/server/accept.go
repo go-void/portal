@@ -5,7 +5,7 @@ import (
 	"github.com/go-void/portal/internal/types/opcode"
 )
 
-type AcceptFunc func(dns.MessageHeader) AcceptAction
+type AcceptFunc func(dns.Header) AcceptAction
 
 type AcceptAction int
 
@@ -16,7 +16,7 @@ const (
 	NoImplMessage
 )
 
-func DefaultAcceptFunc(h dns.MessageHeader) AcceptAction {
+func DefaultAcceptFunc(h dns.Header) AcceptAction {
 	if !h.IsQuery {
 		return IgnoreMessage
 	}
