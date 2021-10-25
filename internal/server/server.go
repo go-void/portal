@@ -51,7 +51,7 @@ type Server struct {
 	// DNS messages
 	Unpacker pack.Unpacker
 
-	// Wrapper implements the Wrapper interface to wrap
+	// Packer implements the Packer interface to pack
 	// DNS messages
 	Packer pack.Packer
 
