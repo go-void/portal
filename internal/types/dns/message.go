@@ -7,9 +7,9 @@ import (
 	"github.com/go-void/portal/internal/types/rr"
 )
 
-// This file implements messages described in 4. MESSAGES
+// Message describes a complete DNS message describes in RFC 1035
+// Section 4.
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-4
-
 type Message struct {
 	Header     Header
 	Question   []Question
@@ -18,7 +18,9 @@ type Message struct {
 	Additional []rr.RR
 }
 
-// Header describes the header data of a message
+// Header describes the header data of a message. This header format
+// enables easy access to all header fields. The RawHeader in
+// comparison stores raw data directly from the "wire".
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
 type Header struct {
 	ID                 uint16      // ID
@@ -71,6 +73,8 @@ func (h *RawHeader) ToHeader() Header {
 	}
 }
 
+// ToRaw converts a header to a raw header by applying
+// bitmasks to shift data to the correct positions
 func (h *Header) ToRaw() RawHeader {
 	var rh RawHeader
 
