@@ -4,16 +4,16 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.2
 type HINFO struct {
-	H   RRHeader
+	H   Header
 	CPU string
 	OS  string
 }
 
-func (rr *HINFO) Header() *RRHeader {
+func (rr *HINFO) Header() *Header {
 	return &rr.H
 }
 
-func (rr *HINFO) SetHeader(header RRHeader) {
+func (rr *HINFO) SetHeader(header Header) {
 	rr.H = header
 }
 

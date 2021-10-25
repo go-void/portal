@@ -8,17 +8,17 @@ import (
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.4.2
 type WKS struct {
-	H        RRHeader
+	H        Header
 	Address  net.IP
 	Protocol [1]byte
 	BitMap   []byte
 }
 
-func (rr *WKS) Header() *RRHeader {
+func (rr *WKS) Header() *Header {
 	return &rr.H
 }
 
-func (rr *WKS) SetHeader(header RRHeader) {
+func (rr *WKS) SetHeader(header Header) {
 	rr.H = header
 }
 

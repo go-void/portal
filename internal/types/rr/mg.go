@@ -4,15 +4,15 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.6 (EXPERIMENTAL)
 type MG struct {
-	H       RRHeader
+	H       Header
 	MGMName string
 }
 
-func (rr *MG) Header() *RRHeader {
+func (rr *MG) Header() *Header {
 	return &rr.H
 }
 
-func (rr *MG) SetHeader(header RRHeader) {
+func (rr *MG) SetHeader(header Header) {
 	rr.H = header
 }
 

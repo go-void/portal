@@ -6,15 +6,15 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.14
 type TXT struct {
-	H    RRHeader
+	H    Header
 	Data string
 }
 
-func (rr *TXT) Header() *RRHeader {
+func (rr *TXT) Header() *Header {
 	return &rr.H
 }
 
-func (rr *TXT) SetHeader(header RRHeader) {
+func (rr *TXT) SetHeader(header Header) {
 	rr.H = header
 }
 

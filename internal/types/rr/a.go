@@ -7,15 +7,15 @@ import (
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.4.1
 type A struct {
-	H       RRHeader
+	H       Header
 	Address net.IP
 }
 
-func (rr *A) Header() *RRHeader {
+func (rr *A) Header() *Header {
 	return &rr.H
 }
 
-func (rr *A) SetHeader(header RRHeader) {
+func (rr *A) SetHeader(header Header) {
 	rr.H = header
 }
 

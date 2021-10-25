@@ -4,16 +4,16 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.7 (EXPERIMENTAL)
 type MINFO struct {
-	H        RRHeader
+	H        Header
 	RMailBox string
 	EMailBox string
 }
 
-func (rr *MINFO) Header() *RRHeader {
+func (rr *MINFO) Header() *Header {
 	return &rr.H
 }
 
-func (rr *MINFO) SetHeader(header RRHeader) {
+func (rr *MINFO) SetHeader(header Header) {
 	rr.H = header
 }
 

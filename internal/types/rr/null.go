@@ -2,15 +2,15 @@ package rr
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.10
 type NULL struct {
-	H    RRHeader
+	H    Header
 	Data string
 }
 
-func (rr *NULL) Header() *RRHeader {
+func (rr *NULL) Header() *Header {
 	return &rr.H
 }
 
-func (rr *NULL) SetHeader(header RRHeader) {
+func (rr *NULL) SetHeader(header Header) {
 	rr.H = header
 }
 

@@ -4,15 +4,15 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.12
 type PTR struct {
-	H        RRHeader
+	H        Header
 	PTRDName string
 }
 
-func (rr *PTR) Header() *RRHeader {
+func (rr *PTR) Header() *Header {
 	return &rr.H
 }
 
-func (rr *PTR) SetHeader(header RRHeader) {
+func (rr *PTR) SetHeader(header Header) {
 	rr.H = header
 }
 

@@ -4,15 +4,15 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.1
 type CNAME struct {
-	H      RRHeader
+	H      Header
 	Target string
 }
 
-func (rr *CNAME) Header() *RRHeader {
+func (rr *CNAME) Header() *Header {
 	return &rr.H
 }
 
-func (rr *CNAME) SetHeader(header RRHeader) {
+func (rr *CNAME) SetHeader(header Header) {
 	rr.H = header
 }
 

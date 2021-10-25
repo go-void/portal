@@ -4,16 +4,16 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.9
 type MX struct {
-	H          RRHeader
+	H          Header
 	Preference uint16
 	Exchange   string
 }
 
-func (rr *MX) Header() *RRHeader {
+func (rr *MX) Header() *Header {
 	return &rr.H
 }
 
-func (rr *MX) SetHeader(header RRHeader) {
+func (rr *MX) SetHeader(header Header) {
 	rr.H = header
 }
 

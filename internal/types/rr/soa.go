@@ -4,7 +4,7 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.13
 type SOA struct {
-	H       RRHeader
+	H       Header
 	MName   string
 	RName   string
 	Serial  uint32
@@ -14,11 +14,11 @@ type SOA struct {
 	Minimum uint32
 }
 
-func (rr *SOA) Header() *RRHeader {
+func (rr *SOA) Header() *Header {
 	return &rr.H
 }
 
-func (rr *SOA) SetHeader(header RRHeader) {
+func (rr *SOA) SetHeader(header Header) {
 	rr.H = header
 }
 

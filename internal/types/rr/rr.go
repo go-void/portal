@@ -23,10 +23,10 @@ var (
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.2
 type RR interface {
 	// Get header of RR
-	Header() *RRHeader
+	Header() *Header
 
 	// Set header of RR
-	SetHeader(RRHeader)
+	SetHeader(Header)
 
 	// Set resource record data
 	SetData(...interface{}) error
@@ -41,9 +41,9 @@ type RR interface {
 	Pack([]byte, int) (int, error)
 }
 
-// RRHeader describes header data of a resource record.
+// Header describes header data of a resource record.
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.2.1
-type RRHeader struct {
+type Header struct {
 	// Name specifies an owner name
 	Name string
 

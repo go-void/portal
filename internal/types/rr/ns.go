@@ -4,15 +4,15 @@ import "github.com/go-void/portal/internal/wire"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11
 type NS struct {
-	H       RRHeader
+	H       Header
 	NSDName string
 }
 
-func (rr *NS) Header() *RRHeader {
+func (rr *NS) Header() *Header {
 	return &rr.H
 }
 
-func (rr *NS) SetHeader(header RRHeader) {
+func (rr *NS) SetHeader(header Header) {
 	rr.H = header
 }
 
