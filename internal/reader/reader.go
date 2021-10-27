@@ -18,12 +18,12 @@ type Reader interface {
 }
 
 type DefaultReader struct {
-	OOBSize int
+	AncillarySize int
 }
 
-func NewDefault(oobSize int) Reader {
+func NewDefault(ancillarySize int) Reader {
 	return &DefaultReader{
-		OOBSize: oobSize,
+		AncillarySize: ancillarySize,
 	}
 }
 
@@ -31,15 +31,15 @@ func NewDefault(oobSize int) Reader {
 // returns the message as a slice of bytes, the length of the
 // read message, session data or an error
 func (r *DefaultReader) ReadUDP(c *net.UDPConn, message []byte) (int, dns.Session, error) {
-	oob := make([]byte, r.OOBSize)
+	ancillary := make([]byte, r.AncillarySize)
 	session := dns.Session{}
 
-	mn, oobn, _, addr, err := c.ReadMsgUDP(message, oob)
+	mn, ancillaryn, _, addr, err := c.ReadMsgUDP(message, ancillary)
 	if err != nil {
 		return mn, session, err
 	}
 
 	session.Address = addr
-	session.Additional = oob[:oobn]
+	session.Additional = ancillary[:ancillaryn]
 	return mn, session, nil
 }

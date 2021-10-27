@@ -78,12 +78,11 @@ type Server struct {
 	// pool
 	UDPMessageSize int
 
-	// OOBSize is the maximum size required to store
-	// out-of-band data of UDP messages. This is culculated
+	// AncillarySize is the maximum size required to store
+	// ancillary data of UDP messages. This is culculated
 	// beforehand to avoid re-calculation the same size
 	// over and over again
-	// TODO (Techassi): Rename OOB to Ancillary
-	OOBSize int
+	AncillarySize int
 
 	// AcceptFunc validates if the DNS message should be
 	// accepted or rejected (when sending invalid data)
@@ -169,13 +168,13 @@ func (s *Server) ListenAndServe() error {
 
 // init initializes some server parameters
 func (s *Server) init() error {
-	oob4 := ipv4.NewControlMessage(ipv4.FlagDst | ipv4.FlagInterface)
-	oob6 := ipv6.NewControlMessage(ipv6.FlagDst | ipv6.FlagInterface)
+	ancillary4 := ipv4.NewControlMessage(ipv4.FlagDst | ipv4.FlagInterface)
+	ancillary6 := ipv6.NewControlMessage(ipv6.FlagDst | ipv6.FlagInterface)
 
-	if len(oob4) > len(oob6) {
-		s.OOBSize = len(oob4)
+	if len(ancillary4) > len(ancillary6) {
+		s.AncillarySize = len(ancillary4)
 	} else {
-		s.OOBSize = len(oob6)
+		s.AncillarySize = len(ancillary6)
 	}
 
 	// Init new default interface implementations
@@ -184,7 +183,7 @@ func (s *Server) init() error {
 	s.Unpacker = pack.NewDefaultUnpacker()
 	s.Packer = pack.NewDefaultPacker()
 
-	s.Reader = reader.NewDefault(s.OOBSize)
+	s.Reader = reader.NewDefault(s.AncillarySize)
 	s.AcceptFunc = DefaultAcceptFunc
 
 	s.Store = store.NewDefaultStore()
