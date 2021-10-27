@@ -50,7 +50,7 @@ func (s *DefaultStore) Get(name string, class, t uint16) (rr.RR, error) {
 		return nil, err
 	}
 
-	record.SetHeader(rr.RRHeader{
+	record.SetHeader(rr.Header{
 		Name:     name,
 		Class:    class,
 		Type:     t,
