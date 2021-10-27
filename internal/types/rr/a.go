@@ -2,6 +2,7 @@ package rr
 
 import (
 	"encoding/binary"
+	"fmt"
 	"net"
 )
 
@@ -33,11 +34,12 @@ func (rr *A) SetData(data ...interface{}) error {
 }
 
 func (rr *A) String() string {
-	return rr.Address.String()
+	return fmt.Sprintf("%v %s", rr.H, rr.Address)
 }
 
 func (rr *A) Unpack(data []byte, offset int) (int, error) {
-	return offset, nil
+	rr.Address = net.IPv4(data[offset], data[offset+1], data[offset+2], data[offset+3])
+	return offset + 4, nil
 }
 
 func (rr *A) Pack(buf []byte, offset int) (int, error) {
