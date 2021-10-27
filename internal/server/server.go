@@ -266,15 +266,20 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	// the record data. We then try to resolve the name
 	// via the resolver
 	if err != nil {
-		s.Resolver.Resolve(
-			message.Header.RecursionDesired,
+		record, err = s.Resolver.Resolve(
+			resolver.Forward, // TODO (Techassi): Make this dynamic
 			message.Question[0].Name,
 			message.Question[0].Class,
 			message.Question[0].Type,
 		)
+		if err != nil {
+			return
+		}
 	}
 
 	message.AddAnswer(record)
+	message.Header.IsQuery = false
+
 	b, err := s.Packer.Pack(message)
 	if err != nil {
 		return
