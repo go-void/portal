@@ -81,8 +81,8 @@ func (h *Header) ToRaw() RawHeader {
 	rh.ID = h.ID
 	rh.Flags = uint16(h.OpCode)<<11 | uint16(h.RCode&0xF)
 
-	if h.IsQuery {
-		rh.Flags &= m.QR
+	if !h.IsQuery {
+		rh.Flags |= m.QR
 	}
 
 	if h.Authoritative {
