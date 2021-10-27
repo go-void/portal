@@ -17,27 +17,27 @@ var (
 )
 
 type Unpacker interface {
-	// Unpack unwraps a single complete DNS message from the
+	// Unpack unpacks a single complete DNS message from the
 	// received byte slice
 	Unpack(dns.Header, []byte, int) (dns.Message, error)
 
-	// UnpackHeader unwraps header data from the received
+	// UnpackHeader unpacks header data from the received
 	// byte slice
 	UnpackHeader([]byte) (dns.Header, int, error)
 
-	// UnpackQuestion unwraps a question from the received
+	// UnpackQuestion unpacks a question from the received
 	// byte slice
 	UnpackQuestion([]byte, int) (dns.Question, int)
 
-	// UnpackRRList unwraps a list of resource records from the
+	// UnpackRRList unpacks a list of resource records from the
 	// received byte slice
 	UnpackRRList(uint16, []byte, int) ([]rr.RR, int, error)
 
-	// UnpackRR unwraps a single resource record from the
+	// UnpackRR unpacks a single resource record from the
 	// received byte slice
 	UnpackRR([]byte, int) (rr.RR, int, error)
 
-	// UnpackRRHeader unwraps header data of a resource
+	// UnpackRRHeader unpacks header data of a resource
 	// record from the received byte slice
 	UnpackRRHeader([]byte, int) (rr.Header, int)
 }
@@ -57,7 +57,7 @@ func NewDefaultUnpacker() Unpacker {
 	}
 }
 
-// Unpack unwraps a single complete DNS message from the received byte slice
+// Unpack unpacks a single complete DNS message from the received byte slice
 func (p *DefaultUnpacker) Unpack(header dns.Header, data []byte, offset int) (dns.Message, error) {
 	m := dns.Message{}
 	m.Header = header
@@ -118,7 +118,7 @@ func (p *DefaultUnpacker) Unpack(header dns.Header, data []byte, offset int) (dn
 	return m, nil
 }
 
-// UnpackHeader unwraps header data from the received byte slice
+// UnpackHeader unpacks header data from the received byte slice
 func (p *DefaultUnpacker) UnpackHeader(data []byte) (dns.Header, int, error) {
 	p.reader.Reset(data)
 
@@ -131,7 +131,7 @@ func (p *DefaultUnpacker) UnpackHeader(data []byte) (dns.Header, int, error) {
 	return rh.ToHeader(), binary.Size(rh), nil
 }
 
-// UnpackQuestion unwraps a question from the received byte slice
+// UnpackQuestion unpacks a question from the received byte slice
 func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question, int) {
 	qname, offset := wire.UnpackDomainName(data, offset)
 	t, offset := wire.UnpackUint16(data, offset)
@@ -146,7 +146,7 @@ func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question,
 	return q, offset
 }
 
-// UnpackRRList unwraps a list of resource records from the received byte slice
+// UnpackRRList unpacks a list of resource records from the received byte slice
 func (p *DefaultUnpacker) UnpackRRList(count uint16, data []byte, offset int) ([]rr.RR, int, error) {
 	if count == 0 {
 		return nil, offset, nil
@@ -173,7 +173,7 @@ func (p *DefaultUnpacker) UnpackRRList(count uint16, data []byte, offset int) ([
 	return list, offset, nil
 }
 
-// UnpackRR unwraps a single resource record from the received byte slice
+// UnpackRR unpacks a single resource record from the received byte slice
 func (p *DefaultUnpacker) UnpackRR(data []byte, offset int) (rr.RR, int, error) {
 	header, offset := p.UnpackRRHeader(data, offset)
 
@@ -193,7 +193,7 @@ func (p *DefaultUnpacker) UnpackRR(data []byte, offset int) (rr.RR, int, error) 
 	return record, offset, nil
 }
 
-// UnpackRRHeader unwraps header data of a resource record from the received byte slice
+// UnpackRRHeader unpacks header data of a resource record from the received byte slice
 func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.Header, int) {
 	header := rr.Header{}
 
