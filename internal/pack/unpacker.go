@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"strings"
 
 	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
@@ -46,8 +45,7 @@ type Unpacker interface {
 // DNS messages. It is based on a regular byte Reader to read
 // bytes into a pre-defined struct
 type DefaultUnpacker struct {
-	reader  *bytes.Reader
-	builder strings.Builder
+	reader *bytes.Reader
 }
 
 // NewDefaultUnpacker creates a new default wrapper instance
