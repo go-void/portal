@@ -65,8 +65,7 @@ func PackDomainName(name string, buf []byte, offset int) (int, error) {
 		label := labels[i]
 		switch label {
 		case "", ".":
-			buf[offset] = 0x0
-			offset++
+			break
 		default:
 			buf[offset] = uint8(len(label))
 			offset++
@@ -76,6 +75,9 @@ func PackDomainName(name string, buf []byte, offset int) (int, error) {
 				offset++
 			}
 		}
+
+		buf[offset] = 0x0
+		offset++
 	}
 
 	return offset, nil
