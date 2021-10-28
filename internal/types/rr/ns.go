@@ -1,6 +1,10 @@
 package rr
 
-import "github.com/go-void/portal/internal/wire"
+import (
+	"fmt"
+
+	"github.com/go-void/portal/internal/wire"
+)
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11
 type NS struct {
@@ -30,10 +34,12 @@ func (rr *NS) SetData(data ...interface{}) error {
 }
 
 func (rr *NS) String() string {
-	return ""
+	return fmt.Sprintf("%v %s", rr.H, rr.NSDName)
 }
 
 func (rr *NS) Unpack(data []byte, offset int) (int, error) {
+	name, offset := wire.UnpackDomainName(data, offset)
+	rr.NSDName = name
 	return offset, nil
 }
 
