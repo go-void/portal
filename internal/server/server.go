@@ -178,7 +178,9 @@ func (s *Server) init() error {
 	}
 
 	// Init new default interface implementations
-	s.Resolver = resolver.NewDefaultResolver()
+	s.Resolver = resolver.NewRecursiveResolver([]net.IP{
+		net.ParseIP("198.41.0.4"),
+	})
 
 	s.Unpacker = pack.NewDefaultUnpacker()
 	s.Packer = pack.NewDefaultPacker()
@@ -245,33 +247,20 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	// TODO (Techassi): Just pass the question instead of the individual parameters
 	// First look in cache if we get a hit
 	if s.usesCache {
-		record, ok = s.Cache.Get(
-			message.Question[0].Name,
-			message.Question[0].Class,
-			message.Question[0].Type,
-		)
+		record, ok = s.Cache.Get(message.Question[0])
 	}
 
 	// If we don't get a cache hit or we simply use no cache
 	// retrieve record data from the store
 	if !ok || !s.usesCache {
-		record, err = s.Store.Get(
-			message.Question[0].Name,
-			message.Question[0].Class,
-			message.Question[0].Type,
-		)
+		record, err = s.Store.Get(message.Question[0])
 	}
 
 	// At this point neither the cache or the store stores
 	// the record data. We then try to resolve the name
 	// via the resolver
 	if err != nil {
-		record, err = s.Resolver.Resolve(
-			resolver.Forward, // TODO (Techassi): Make this dynamic
-			message.Question[0].Name,
-			message.Question[0].Class,
-			message.Question[0].Type,
-		)
+		record, err = s.Resolver.Resolve(message.Question[0])
 		if err != nil {
 			return
 		}

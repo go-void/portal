@@ -4,13 +4,14 @@ package store
 
 import (
 	"github.com/go-void/portal/internal/tree"
+	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
 )
 
 type Store interface {
 	// Get matches a 'node' by name and returns the selected type's data.
 	// Example: example.com with type A would return 93.184.216.34
-	Get(string, uint16, uint16) (rr.RR, error)
+	Get(dns.Question) (rr.RR, error)
 
 	// Set sets type's data of a 'node' selected by name
 	Set(string, uint16, uint16, interface{}) error
@@ -34,26 +35,26 @@ func NewDefaultStore() *DefaultStore {
 }
 
 // Get matches a 'node' by name and returns the selected type's data
-func (s *DefaultStore) Get(name string, class, t uint16) (rr.RR, error) {
-	node, err := s.Tree.Get(name)
+func (s *DefaultStore) Get(question dns.Question) (rr.RR, error) {
+	node, err := s.Tree.Get(question.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := node.Data(class, t)
+	data, err := node.Data(question.Class, question.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	record, err := rr.New(t)
+	record, err := rr.New(question.Type)
 	if err != nil {
 		return nil, err
 	}
 
 	record.SetHeader(rr.Header{
-		Name:     name,
-		Class:    class,
-		Type:     t,
+		Name:     question.Name,
+		Class:    question.Class,
+		Type:     question.Type,
 		TTL:      3600,
 		RDLength: 4, // FIXME (Techassi): Don't make this fixed
 	})
