@@ -1,9 +1,14 @@
+// Package cache provides an in-memory cache to store
+// answers from remote DNS servers
 package cache
 
-import "github.com/go-void/portal/internal/types/rr"
+import (
+	"github.com/go-void/portal/internal/types/dns"
+	"github.com/go-void/portal/internal/types/rr"
+)
 
 type Cache interface {
-	Get(string, uint16, uint16) (rr.RR, bool)
+	Get(dns.Question) (rr.RR, bool)
 
 	Set(string, string)
 

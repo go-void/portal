@@ -1,3 +1,4 @@
+// Package client provides a DNS client to send and receive DNS messages
 package client
 
 import (
