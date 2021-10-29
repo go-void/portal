@@ -74,6 +74,7 @@ func PackDomainName(name string, buf []byte, offset int) (int, error) {
 				buf[offset] = label[l]
 				offset++
 			}
+			continue
 		}
 
 		buf[offset] = 0x0
