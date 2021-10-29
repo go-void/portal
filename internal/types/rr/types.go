@@ -23,6 +23,8 @@ const (
 	TypeMX    uint16 = 15 // Mail exchange
 	TypeTXT   uint16 = 16 // Text strings
 
+	TypeAAAA uint16 = 28 // AAAA host address
+
 	// QTypes are a superset of types and should only be
 	// allowed in questions
 

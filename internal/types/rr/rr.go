@@ -79,6 +79,7 @@ var typeMap = map[uint16]func() RR{
 	TypeTXT:   func() RR { return new(TXT) },
 	TypeA:     func() RR { return new(A) },
 	TypeWKS:   func() RR { return new(WKS) },
+	TypeAAAA:  func() RR { return new(AAAA) },
 }
 
 // New returns a new RR based on the provided type
