@@ -1,15 +1,18 @@
 package resolver
 
 import (
-	"fmt"
+	"errors"
 	"net"
 	"sync"
 
 	"github.com/go-void/portal/internal/cache"
 	"github.com/go-void/portal/internal/client"
-	"github.com/go-void/portal/internal/labels"
 	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
+)
+
+var (
+	ErrNoData = errors.New("no data")
 )
 
 type RecursiveResolver struct {
@@ -24,6 +27,7 @@ type RecursiveResolver struct {
 	// be used. It is a simple round-robin algorithm
 	HintIndex int
 
+	// Access to the cache instance
 	cache cache.Cache
 
 	lock sync.RWMutex
@@ -38,35 +42,90 @@ func NewRecursiveResolver(hints []net.IP) *RecursiveResolver {
 }
 
 // Resolve resolves a query by recursivly resolving it
-func (r *RecursiveResolver) Resolve(question dns.Question) (rr.RR, error) {
-	lbs := labels.FromRoot(question.Name)[1:]
+func (r *RecursiveResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
+	var glueFound bool
+	var ip = r.Hint()
 
-	for i, l := range lbs {
-		if i == 0 {
-			response, err := r.Client.Query(l, question.Class, question.Type, r.Hint())
+	for {
+		response, err := r.Client.Query(name, class, t, ip)
+		if err != nil {
+			return nil, err
+		}
+
+		// We got a answer, return it immediatly
+		if response.Header.ANCount > 0 {
+			return response.Answer[0], nil
+		}
+
+		// We got referals to remote DNS servers
+		if response.Header.NSCount > 0 {
+			// NOTE (Techassi): Should we check all NS records?
+			n := response.Authority[0]
+
+			// NOTE (Techassi): Can we be sure that each record in the authority section is a NS record?
+			ns := n.(*rr.NS)
+
+			// Check if we have a "glue record" for the NS record
+			if response.Header.ARCount > 0 {
+				glueFound = false
+
+				for _, ar := range response.Additional {
+					if ar.Header().Class != class || ar.Header().Type != t {
+						continue
+					}
+
+					if ar.Header().Name == ns.NSDName {
+						// At this point we found a glue record
+
+						switch ar.Header().Type {
+						case rr.TypeA:
+							glue := ar.(*rr.A)
+							ip = glue.Address
+						case rr.TypeAAAA:
+							glue := ar.(*rr.AAAA)
+							ip = glue.Address
+						}
+
+						glueFound = true
+						break
+					}
+				}
+
+				// We have a glue record, which means we can start from the top and use the selected IP address to
+				// continue our recursive query
+				if glueFound {
+					continue
+				}
+			}
+
+			// We don't have any matching "glue record", so we have to manually lookup the NS record domain name
+			nsAnswer, err := r.Resolve(ns.NSDName, 1, 1)
 			if err != nil {
-				fmt.Println(err)
 				return nil, err
 			}
-			fmt.Println("Resp", response)
+
+			// At this point we should have an A record for the remote authoritative name server
+			nsARecord := nsAnswer.(*rr.A)
+			ip = nsARecord.Address
 			continue
 		}
 
-		// Do iterative queries based on previous answers
-		// response, err := r.client.Query(l, class, t, r.Hint())
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// fmt.Println(response)
+		// If we are here we did get a response but with no content
+		return nil, ErrNoData
 	}
-
-	return nil, nil
 }
 
+// ResolveQuestion is a convenience function which allows to provide a DNS question instead of individual parameters
+func (r *RecursiveResolver) ResolveQuestion(question dns.Question) (rr.RR, error) {
+	return r.Resolve(question.Name, question.Class, question.Type)
+}
+
+// Cache provides access to a cache instance to store answers from remote DNS servers for the given TTL
 func (r *RecursiveResolver) Cache() cache.Cache {
 	return r.cache
 }
 
+// Hint returns a root hint
 func (r *RecursiveResolver) Hint() net.IP {
 	r.lock.Lock()
 

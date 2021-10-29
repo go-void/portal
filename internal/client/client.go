@@ -105,7 +105,15 @@ func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (dns.Mess
 
 // QueryUDP sends a DNS query using UDP
 func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, error) {
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", ip.String(), 53), c.DialTimeout)
+	var address string
+
+	if len(ip) == 16 {
+		address = fmt.Sprintf("%s:%d", ip.String(), 53)
+	} else {
+		address = fmt.Sprintf("[%s]:%d", ip.String(), 53)
+	}
+
+	conn, err := net.DialTimeout("udp", address, c.DialTimeout)
 	if err != nil {
 		return dns.Message{}, err
 	}

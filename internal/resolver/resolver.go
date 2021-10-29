@@ -13,7 +13,12 @@ type Resolver interface {
 	// Resolve resolves a query either iteratively,
 	// recursively or by forwarding it to a upstream
 	// DNS server
-	Resolve(dns.Question) (rr.RR, error)
+	Resolve(string, uint16, uint16) (rr.RR, error)
+
+	// ResolveQuestion is a convenience function which
+	// allows to provide a DNS question instead of
+	// individual parameters
+	ResolveQuestion(dns.Question) (rr.RR, error)
 
 	// Cache provides access to a cache instance to
 	// store answers from remote DNS servers for

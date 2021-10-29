@@ -260,7 +260,7 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	// the record data. We then try to resolve the name
 	// via the resolver
 	if err != nil {
-		record, err = s.Resolver.Resolve(message.Question[0])
+		record, err = s.Resolver.ResolveQuestion(message.Question[0])
 		if err != nil {
 			return
 		}
@@ -284,7 +284,7 @@ func (s *Server) readUDP() ([]byte, dns.Session, error) {
 	rm := s.messageList.Get().([]byte)
 	mn, session, err := s.Reader.ReadUDP(s.UDPListener, rm)
 	if err != nil {
-		s.messageList.Put(&rm)
+		s.messageList.Put(rm)
 		return nil, session, err
 	}
 	return rm[:mn], session, nil
@@ -296,7 +296,6 @@ func (s *Server) writeUDP(b []byte, session dns.Session) {
 	if err != nil {
 		// Handle
 	}
-	s.messageList.Put(&b)
 }
 
 // isRunning returns if the server instance is running
