@@ -8,6 +8,7 @@ import (
 	"github.com/go-void/portal/internal/wire"
 )
 
+// See https://datatracker.ietf.org/doc/html/rfc3596
 type AAAA struct {
 	H       Header
 	Address net.IP
@@ -28,7 +29,7 @@ func (rr *AAAA) SetData(data ...interface{}) error {
 
 	addr, ok := data[0].(net.IP)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.Address = addr
 	return nil

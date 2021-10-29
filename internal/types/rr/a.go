@@ -29,7 +29,7 @@ func (rr *A) SetData(data ...interface{}) error {
 
 	addr, ok := data[0].(net.IP)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.Address = addr
 	return nil

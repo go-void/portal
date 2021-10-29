@@ -24,13 +24,13 @@ func (rr *MINFO) SetData(data ...interface{}) error {
 
 	rmail, ok := data[0].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.RMailBox = rmail
 
 	email, ok := data[1].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.EMailBox = email
 

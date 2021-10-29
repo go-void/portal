@@ -24,13 +24,13 @@ func (rr *MX) SetData(data ...interface{}) error {
 
 	pref, ok := data[0].(uint16)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.Preference = pref
 
 	exchange, ok := data[1].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.Exchange = exchange
 

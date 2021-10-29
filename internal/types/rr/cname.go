@@ -23,7 +23,7 @@ func (rr *CNAME) SetData(data ...interface{}) error {
 
 	target, ok := data[0].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.Target = target
 	return nil

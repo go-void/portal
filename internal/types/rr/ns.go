@@ -27,7 +27,7 @@ func (rr *NS) SetData(data ...interface{}) error {
 
 	name, ok := data[0].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.NSDName = name
 	return nil

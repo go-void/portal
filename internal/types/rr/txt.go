@@ -25,7 +25,7 @@ func (rr *TXT) SetData(data ...interface{}) error {
 
 	d, ok := data[0].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.Data = d
 	return nil

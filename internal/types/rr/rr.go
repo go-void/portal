@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrNoSuchType            = errors.New("no such RR type")
-	ErrFailedToConvertRRDate = errors.New("failed to convert RR data")
+	ErrFailedToConvertRRData = errors.New("failed to convert RR data")
 	ErrInvalidRRData         = errors.New("invalid RR data")
 )
 

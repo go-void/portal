@@ -23,7 +23,7 @@ func (rr *MR) SetData(data ...interface{}) error {
 
 	name, ok := data[0].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.NewName = name
 

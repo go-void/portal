@@ -29,7 +29,7 @@ func (rr *SOA) SetData(data ...interface{}) error {
 
 	mname, ok := data[0].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.MName = mname
 

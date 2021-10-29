@@ -24,13 +24,13 @@ func (rr *HINFO) SetData(data ...interface{}) error {
 
 	cpu, ok := data[0].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.CPU = cpu
 
 	os, ok := data[1].(string)
 	if !ok {
-		return ErrFailedToConvertRRDate
+		return ErrFailedToConvertRRData
 	}
 	rr.OS = os
 
