@@ -2,30 +2,49 @@ package wire
 
 import (
 	"encoding/binary"
+	"net"
 )
 
 // TODO (Techassi): Add offset overflow check
 
-// UnpackUint8 unpacks a uint8 of 'data' at 'offset'
-// and returns the new offset
+// UnpackUint8 unpacks a uint8 from data at offset and returns the new offset
 func UnpackUint8(data []byte, offset int) (uint8, int) {
 	return data[offset], offset + 1
 }
 
-// UnpackUint16 unpacks a uint16 of 'data' at 'offset'
-// and returns the new offset
+// UnpackUint16 unpacks a uint16 from data at offset and returns the new offset
 func UnpackUint16(data []byte, offset int) (uint16, int) {
 	return binary.BigEndian.Uint16(data[offset:]), offset + 2
 }
 
-// UnpackUint32 unpacks a uint32 of 'data' at 'offset'
-// and returns the new offset
+// UnpackUint32 unpacks a uint32 from data at offset and returns the new offset
 func UnpackUint32(data []byte, offset int) (uint32, int) {
 	return binary.BigEndian.Uint32(data[offset:]), offset + 4
 }
 
-// FIXME (Techassi): Add ability to follow pointers marked by upper 2 bits of an octet set to 1 followed by 14 bits of
-// offset (6 bits from first octet + one octet)
+// UnpackUint64 unpacks a uint64 from data at offset and returns the new offset
+func UnpackUint64(data []byte, offset int) (uint64, int) {
+	return binary.BigEndian.Uint64(data[offset:]), offset + 8
+}
+
+// UnpackIPv4Address unpacks a IPv4 address and returns the new offset
+func UnpackIPv4Address(data []byte, offset int) (net.IP, int) {
+	return net.IPv4(data[offset], data[offset+1], data[offset+2], data[offset+3]), offset + 4
+}
+
+// NOTE (Techassi): Is this actually correct?
+
+// UnpackIPv6Address unpacks a IPv6 address and returns the new offset
+func UnpackIPv6Address(data []byte, offset int) (net.IP, int) {
+	hi, offset := UnpackUint64(data, offset)
+	lo, offset := UnpackUint64(data, offset)
+
+	ip := make(net.IP, net.IPv6len)
+	binary.BigEndian.PutUint64(ip, hi)
+	binary.BigEndian.PutUint64(ip[8:], lo)
+
+	return ip, offset
+}
 
 // UnpackDomainName unwraps a domain name in a DNS question or in a RR header
 func UnpackDomainName(data []byte, offset int) (string, int) {

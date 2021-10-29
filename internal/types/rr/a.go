@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+
+	"github.com/go-void/portal/internal/wire"
 )
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.4.1
@@ -38,8 +40,9 @@ func (rr *A) String() string {
 }
 
 func (rr *A) Unpack(data []byte, offset int) (int, error) {
-	rr.Address = net.IPv4(data[offset], data[offset+1], data[offset+2], data[offset+3])
-	return offset + 4, nil
+	address, offset := wire.UnpackIPv4Address(data, offset)
+	rr.Address = address
+	return offset, nil
 }
 
 func (rr *A) Pack(buf []byte, offset int) (int, error) {
