@@ -42,6 +42,12 @@ func (rr *HINFO) String() string {
 }
 
 func (rr *HINFO) Unpack(data []byte, offset int) (int, error) {
+	cpu, offset := wire.UnpackCharacterString(data, offset)
+	rr.CPU = cpu
+
+	os, offset := wire.UnpackCharacterString(data, offset)
+	rr.OS = os
+
 	return offset, nil
 }
 

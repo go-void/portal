@@ -42,6 +42,12 @@ func (rr *MX) String() string {
 }
 
 func (rr *MX) Unpack(data []byte, offset int) (int, error) {
+	preference, offset := wire.UnpackUint16(data, offset)
+	rr.Preference = preference
+
+	exchange, offset := wire.UnpackDomainName(data, offset)
+	rr.Exchange = exchange
+
 	return offset, nil
 }
 

@@ -34,6 +34,8 @@ func (rr *CNAME) String() string {
 }
 
 func (rr *CNAME) Unpack(data []byte, offset int) (int, error) {
+	target, offset := wire.UnpackDomainName(data, offset)
+	rr.Target = target
 	return offset, nil
 }
 

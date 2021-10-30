@@ -36,6 +36,7 @@ func (rr *TXT) String() string {
 }
 
 func (rr *TXT) Unpack(data []byte, offset int) (int, error) {
+	// TODO (Techassi): Figure out how to unpack multiple character strings
 	return offset, nil
 }
 

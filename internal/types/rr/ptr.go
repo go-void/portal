@@ -34,6 +34,8 @@ func (rr *PTR) String() string {
 }
 
 func (rr *PTR) Unpack(data []byte, offset int) (int, error) {
+	pointer, offset := wire.UnpackDomainName(data, offset)
+	rr.PTRDName = pointer
 	return offset, nil
 }
 

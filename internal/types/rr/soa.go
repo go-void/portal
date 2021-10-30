@@ -43,6 +43,27 @@ func (rr *SOA) String() string {
 }
 
 func (rr *SOA) Unpack(data []byte, offset int) (int, error) {
+	mname, offset := wire.UnpackDomainName(data, offset)
+	rr.MName = mname
+
+	rname, offset := wire.UnpackDomainName(data, offset)
+	rr.RName = rname
+
+	serial, offset := wire.UnpackUint32(data, offset)
+	rr.Serial = serial
+
+	refresh, offset := wire.UnpackUint32(data, offset)
+	rr.Refresh = refresh
+
+	retry, offset := wire.UnpackUint32(data, offset)
+	rr.Retry = retry
+
+	expire, offset := wire.UnpackUint32(data, offset)
+	rr.Expire = expire
+
+	minimum, offset := wire.UnpackUint32(data, offset)
+	rr.Minimum = minimum
+
 	return offset, nil
 }
 

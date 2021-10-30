@@ -35,6 +35,8 @@ func (rr *MD) String() string {
 }
 
 func (rr *MD) Unpack(data []byte, offset int) (int, error) {
+	name, offset := wire.UnpackDomainName(data, offset)
+	rr.MADName = name
 	return offset, nil
 }
 
