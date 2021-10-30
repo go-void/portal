@@ -24,7 +24,7 @@ func New() *Tree {
 		root: Node{
 			parent:   nil,
 			children: make(map[string]Node),
-			data:     make(map[uint16]interface{}),
+			data:     make(map[uint16]Record),
 		},
 	}
 }
@@ -83,7 +83,7 @@ func (t *Tree) Populate(name string) (Node, error) {
 			node := Node{
 				parent:   &current,
 				children: make(map[string]Node),
-				data:     make(map[uint16]interface{}),
+				data:     make(map[uint16]Record),
 			}
 
 			err := current.AddChild(name, node)

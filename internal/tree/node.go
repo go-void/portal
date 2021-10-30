@@ -1,11 +1,22 @@
 package tree
 
+import (
+	"time"
+
+	"github.com/go-void/portal/internal/types/rr"
+)
+
 // Node describes a single node which keeps tracks of it's children,
 // data and parent node
 type Node struct {
 	parent   *Node
 	children map[string]Node
-	data     map[uint16]interface{}
+	data     map[uint16]Record
+}
+
+type Record struct {
+	Expire time.Time
+	RR     rr.RR
 }
 
 // Parent returns this node's parent node
@@ -32,15 +43,18 @@ func (n *Node) AddChild(name string, child Node) error {
 	return nil
 }
 
-// Data returns stored data for type t
-func (n *Node) Data(class, t uint16) (interface{}, error) {
-	if data, ok := n.data[class*100+t]; ok {
-		return data, nil
+// Record returns a stored record with class and type
+func (n *Node) Record(class, t uint16) (Record, error) {
+	if record, ok := n.data[class*100+t]; ok {
+		return record, nil
 	}
-	return nil, ErrNoSuchData
+	return Record{}, ErrNoSuchData
 }
 
 // SetData sets data for type t
-func (n *Node) SetData(class, t uint16, data interface{}) {
-	n.data[class*100+t] = data
+func (n *Node) SetData(class, t uint16, record rr.RR, ttl uint32) {
+	n.data[class*100+t] = Record{
+		Expire: time.Now().Add(time.Duration(ttl) * time.Second),
+		RR:     record,
+	}
 }
