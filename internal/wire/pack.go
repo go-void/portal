@@ -84,7 +84,7 @@ func PackDomainName(name string, buf []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-// See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 <charcter-string>
+// See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 <character-string>
 func PackCharacterString(characters string, buf []byte, offset int) (int, error) {
 	// Character strings can only be 256 octets long (including the length octet)
 	if len(characters) > 255 {

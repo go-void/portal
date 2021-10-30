@@ -89,6 +89,17 @@ func UnpackDomainName(data []byte, offset int) (string, int) {
 	return string(buf), offset
 }
 
-func UnpackCharacterString(data []byte, offset int) (int, error) {
-	return offset, nil
+// UnpackCharacterString unpacks a character string.
+// See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 <character-string>
+func UnpackCharacterString(data []byte, offset int) (string, int) {
+	l := int(data[offset])
+	t := make([]byte, l)
+	offset++
+
+	for i := 0; i < l; i++ {
+		t[i] = data[offset]
+		offset++
+	}
+
+	return string(t), offset
 }
