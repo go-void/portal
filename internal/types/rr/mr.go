@@ -34,6 +34,10 @@ func (rr *MR) String() string {
 	return ""
 }
 
+func (rr *MR) Len() uint16 {
+	return uint16(len(rr.NewName)) + 1
+}
+
 func (rr *MR) Unpack(data []byte, offset int) (int, error) {
 	name, offset := wire.UnpackDomainName(data, offset)
 	rr.NewName = name

@@ -41,6 +41,10 @@ func (rr *MINFO) String() string {
 	return ""
 }
 
+func (rr *MINFO) Len() uint16 {
+	return uint16(len(rr.RMailBox)+len(rr.EMailBox)) + 2
+}
+
 func (rr *MINFO) Unpack(data []byte, offset int) (int, error) {
 	rmailbox, offset := wire.UnpackDomainName(data, offset)
 	rr.RMailBox = rmailbox

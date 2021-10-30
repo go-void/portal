@@ -31,6 +31,10 @@ func (rr *NULL) String() string {
 	return ""
 }
 
+func (rr *NULL) Len() uint16 {
+	return 0
+}
+
 func (rr *NULL) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }

@@ -34,6 +34,9 @@ type RR interface {
 	// String returns the representation of any RR as text
 	String() string
 
+	// Len returns the records RDLENGTH
+	Len() uint16
+
 	// Unpack unpacks the RDATA
 	Unpack([]byte, int) (int, error)
 

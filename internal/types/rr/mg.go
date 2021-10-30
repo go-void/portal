@@ -34,6 +34,10 @@ func (rr *MG) String() string {
 	return ""
 }
 
+func (rr *MG) Len() uint16 {
+	return uint16(len(rr.MGMName)) + 1
+}
+
 func (rr *MG) Unpack(data []byte, offset int) (int, error) {
 	name, offset := wire.UnpackDomainName(data, offset)
 	rr.MGMName = name

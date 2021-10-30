@@ -42,6 +42,10 @@ func (rr *SOA) String() string {
 	return ""
 }
 
+func (rr *SOA) Len() uint16 {
+	return uint16(len(rr.MName)+len(rr.RName)) + 2 + 20
+}
+
 func (rr *SOA) Unpack(data []byte, offset int) (int, error) {
 	mname, offset := wire.UnpackDomainName(data, offset)
 	rr.MName = mname

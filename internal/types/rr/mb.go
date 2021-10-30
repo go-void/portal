@@ -34,6 +34,10 @@ func (rr *MB) String() string {
 	return ""
 }
 
+func (rr *MB) Len() uint16 {
+	return uint16(len(rr.MADName)) + 1
+}
+
 func (rr *MB) Unpack(data []byte, offset int) (int, error) {
 	name, offset := wire.UnpackDomainName(data, offset)
 	rr.MADName = name

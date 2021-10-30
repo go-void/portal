@@ -41,6 +41,10 @@ func (rr *HINFO) String() string {
 	return ""
 }
 
+func (rr *HINFO) Len() uint16 {
+	return uint16(len(rr.CPU)+len(rr.OS)) + 2
+}
+
 func (rr *HINFO) Unpack(data []byte, offset int) (int, error) {
 	cpu, offset := wire.UnpackCharacterString(data, offset)
 	rr.CPU = cpu

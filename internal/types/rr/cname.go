@@ -33,6 +33,10 @@ func (rr *CNAME) String() string {
 	return ""
 }
 
+func (rr *CNAME) Len() uint16 {
+	return uint16(len(rr.Target)) + 1
+}
+
 func (rr *CNAME) Unpack(data []byte, offset int) (int, error) {
 	target, offset := wire.UnpackDomainName(data, offset)
 	rr.Target = target

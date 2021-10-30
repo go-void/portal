@@ -41,6 +41,10 @@ func (rr *MX) String() string {
 	return ""
 }
 
+func (rr *MX) Len() uint16 {
+	return uint16(len(rr.Exchange)) + 3
+}
+
 func (rr *MX) Unpack(data []byte, offset int) (int, error) {
 	preference, offset := wire.UnpackUint16(data, offset)
 	rr.Preference = preference

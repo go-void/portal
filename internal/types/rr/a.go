@@ -39,6 +39,10 @@ func (rr *A) String() string {
 	return fmt.Sprintf("%v %s", rr.H, rr.Address)
 }
 
+func (rr *A) Len() uint16 {
+	return 4
+}
+
 func (rr *A) Unpack(data []byte, offset int) (int, error) {
 	address, offset := wire.UnpackIPv4Address(data, offset)
 	rr.Address = address

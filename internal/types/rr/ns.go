@@ -37,6 +37,10 @@ func (rr *NS) String() string {
 	return fmt.Sprintf("%v %s", rr.H, rr.NSDName)
 }
 
+func (rr *NS) Len() uint16 {
+	return uint16(len(rr.NSDName)) + 1
+}
+
 func (rr *NS) Unpack(data []byte, offset int) (int, error) {
 	name, offset := wire.UnpackDomainName(data, offset)
 	rr.NSDName = name

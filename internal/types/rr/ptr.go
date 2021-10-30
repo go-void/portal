@@ -33,6 +33,10 @@ func (rr *PTR) String() string {
 	return ""
 }
 
+func (rr *PTR) Len() uint16 {
+	return uint16(len(rr.PTRDName)) + 1
+}
+
 func (rr *PTR) Unpack(data []byte, offset int) (int, error) {
 	pointer, offset := wire.UnpackDomainName(data, offset)
 	rr.PTRDName = pointer
