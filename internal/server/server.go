@@ -177,10 +177,9 @@ func (s *Server) init() error {
 		s.AncillarySize = len(ancillary6)
 	}
 
-	// Init new default interface implementations
-	s.Resolver = resolver.NewRecursiveResolver([]net.IP{
-		net.ParseIP("198.41.0.4"),
-	})
+	c := cache.NewDefaultCache()
+
+	s.Resolver = resolver.NewForwardingResolver(net.ParseIP("1.1.1.1"), c)
 
 	s.Unpacker = pack.NewDefaultUnpacker()
 	s.Packer = pack.NewDefaultPacker()
@@ -190,16 +189,6 @@ func (s *Server) init() error {
 
 	s.Store = store.NewDefaultStore()
 	s.usesCache = s.Store.UsesCache()
-
-	err := s.Store.Set("google.de", 1, 1, net.ParseIP("142.250.186.35"))
-	if err != nil {
-		return err
-	}
-
-	err = s.Store.Set(".", 1, 1, net.ParseIP("198.41.0.4"))
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -240,19 +229,21 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 		return
 	}
 
+	var status cache.Status
+	var entry cache.Entry
 	var record rr.RR
 	var err error
-	var ok bool
 
 	// TODO (Techassi): Just pass the question instead of the individual parameters
 	// First look in cache if we get a hit
 	if s.usesCache {
-		record, ok = s.Cache.Get(message.Question[0])
+		entry, status, err = s.Cache.GetQuestion(message.Question[0])
+		record = entry.Data
 	}
 
 	// If we don't get a cache hit or we simply use no cache
 	// retrieve record data from the store
-	if !ok || !s.usesCache {
+	if status != cache.Hit || !s.usesCache {
 		record, err = s.Store.Get(message.Question[0])
 	}
 
