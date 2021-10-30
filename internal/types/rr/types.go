@@ -16,7 +16,6 @@ const (
 	TypeMG    uint16 = 8  // A mail group member (EXPERIMENTAL)
 	TypeMR    uint16 = 9  // A mail rename domain name (EXPERIMENTAL)
 	TypeNULL  uint16 = 10 // A null RR (EXPERIMENTAL)
-	TypeWKS   uint16 = 11 // A well known service description
 	TypePTR   uint16 = 12 // A domain name pointer
 	TypeHINFO uint16 = 13 // Host information
 	TypeMINFO uint16 = 14 // Mailbox or mail list information

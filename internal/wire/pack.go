@@ -101,11 +101,3 @@ func PackCharacterString(characters string, buf []byte, offset int) (int, error)
 
 	return offset, nil
 }
-
-func PackBitMap(bitmap, buf []byte, offset int) (int, error) {
-	for i := 0; i < len(bitmap); i++ {
-		buf[offset] = bitmap[i]
-		offset++
-	}
-	return offset, nil
-}
