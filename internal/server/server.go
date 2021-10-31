@@ -1,5 +1,4 @@
-// Package server provides functions to create and manage DNS
-// server instances
+// Package server provides functions to create and manage DNS server instances
 package server
 
 import (
@@ -234,15 +233,13 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	var record rr.RR
 	var err error
 
-	// TODO (Techassi): Just pass the question instead of the individual parameters
 	// First look in cache if we get a hit
 	if s.usesCache {
-		entry, status, err = s.Cache.GetQuestion(message.Question[0])
-		record = entry.Data
+		entry, status, err = s.Cache.LookupQuestion(message.Question[0])
+		record = entry.Record
 	}
 
-	// If we don't get a cache hit or we simply use no cache
-	// retrieve record data from the store
+	// If we don't get a cache hit or we simply use no cache retrieve record data from the store
 	if status != cache.Hit || !s.usesCache {
 		record, err = s.Store.Get(message.Question[0])
 	}

@@ -37,20 +37,20 @@ func NewForwardingResolver(upstream net.IP, c cache.Cache) *ForwardingResolver {
 
 // Resolve resolves a query by forwarding it to the upstream DNS server
 func (r *ForwardingResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
-	entry, status, err := r.Cache.Get(name, class, t)
+	entry, status, err := r.Cache.Lookup(name, class, t)
 	if err != nil {
 		return nil, err
 	}
 
 	if status == cache.Hit {
-		return entry.Data, nil
+		return entry.Record, nil
 	}
 
 	if status == cache.Expired {
 		max := entry.Expire.Add(time.Duration(r.MaxExpired) * time.Second)
 		if max.After(time.Now()) {
 			go r.Refresh(name, class, t)
-			return entry.Data, nil
+			return entry.Record, nil
 		}
 	}
 
