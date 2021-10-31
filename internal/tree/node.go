@@ -52,9 +52,9 @@ func (n *Node) Record(class, t uint16) (Record, error) {
 }
 
 // SetData sets data for type t
-func (n *Node) SetData(class, t uint16, record rr.RR, ttl uint32) {
+func (n *Node) SetData(class, t uint16, record rr.RR, expire time.Time) {
 	n.data[class*100+t] = Record{
-		Expire: time.Now().Add(time.Duration(ttl) * time.Second),
+		Expire: expire,
 		RR:     record,
 	}
 }

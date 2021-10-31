@@ -43,19 +43,15 @@ func (c *DefaultCache) Get(name string, class, t uint16) (Entry, Status, error) 
 		return Entry{}, Miss, err
 	}
 
-	record := nodeRecord.RR
-	record.SetHeader(rr.Header{
-		Name:     name,
-		Class:    class,
-		Type:     t,
-		TTL:      3600,
-		RDLength: record.Len(),
-	})
+	status := Hit
+	if nodeRecord.Expire.Before(time.Now()) {
+		status = Expired
+	}
 
 	return Entry{
-		Data:   record,
+		Data:   nodeRecord.RR,
 		Expire: nodeRecord.Expire,
-	}, Hit, nil
+	}, status, nil
 }
 
 func (c *DefaultCache) GetQuestion(message dns.Question) (Entry, Status, error) {
@@ -68,6 +64,8 @@ func (c *DefaultCache) Set(name string, class, t uint16, record rr.RR, ttl uint3
 		return err
 	}
 
-	node.SetData(class, t, record, ttl)
+	expire := time.Now().Add(time.Duration(ttl) * time.Second)
+	node.SetData(class, t, record, expire)
+
 	return nil
 }

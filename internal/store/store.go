@@ -3,6 +3,8 @@
 package store
 
 import (
+	"time"
+
 	"github.com/go-void/portal/internal/tree"
 	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
@@ -14,7 +16,7 @@ type Store interface {
 	Get(dns.Question) (rr.RR, error)
 
 	// Set sets type's data of a 'node' selected by name
-	Set(string, uint16, uint16, interface{}) error
+	Set(string, uint16, uint16, rr.RR, uint32) error
 
 	// Indicates if this store is using a cache. This is especially
 	// usefull when the store itself is in-memory which eliminates
@@ -41,40 +43,24 @@ func (s *DefaultStore) Get(question dns.Question) (rr.RR, error) {
 		return nil, err
 	}
 
-	data, err := node.Data(question.Class, question.Type)
+	nodeRecord, err := node.Record(question.Class, question.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	record, err := rr.New(question.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	record.SetHeader(rr.Header{
-		Name:     question.Name,
-		Class:    question.Class,
-		Type:     question.Type,
-		TTL:      3600,
-		RDLength: 4, // FIXME (Techassi): Don't make this fixed
-	})
-
-	err = record.SetData(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return record, err
+	return nodeRecord.RR, err
 }
 
 // Set sets type's data of a 'node' selected by name
-func (s *DefaultStore) Set(name string, class, t uint16, data interface{}) error {
+func (s *DefaultStore) Set(name string, class, t uint16, record rr.RR, ttl uint32) error {
 	node, err := s.Tree.Populate(name)
 	if err != nil {
 		return tree.ErrNodeNotFound
 	}
 
-	node.SetData(class, t, data)
+	expire := time.Now().Add(time.Duration(ttl) * time.Second)
+	node.SetData(class, t, record, expire)
+
 	return nil
 }
 
