@@ -1,7 +1,6 @@
 package resolver
 
 import (
-	"errors"
 	"net"
 	"sync"
 
@@ -9,10 +8,6 @@ import (
 	"github.com/go-void/portal/internal/client"
 	"github.com/go-void/portal/internal/types/dns"
 	"github.com/go-void/portal/internal/types/rr"
-)
-
-var (
-	ErrNoData = errors.New("no data")
 )
 
 type RecursiveResolver struct {
@@ -23,12 +18,12 @@ type RecursiveResolver struct {
 	// hints is a slice of root DNS server hints
 	Hints []net.IP
 
-	// hintIndex keeps track of which root server should
+	// HintIndex keeps track of which root server should
 	// be used. It is a simple round-robin algorithm
 	HintIndex int
 
 	// Access to the cache instance
-	cache cache.Cache
+	Cache cache.Cache
 
 	lock sync.RWMutex
 }
@@ -43,6 +38,15 @@ func NewRecursiveResolver(hints []net.IP) *RecursiveResolver {
 
 // Resolve resolves a query by recursivly resolving it
 func (r *RecursiveResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
+	return r.Lookup(name, class, t)
+}
+
+// ResolveQuestion is a convenience function which allows to provide a DNS question instead of individual parameters
+func (r *RecursiveResolver) ResolveQuestion(question dns.Question) (rr.RR, error) {
+	return r.Resolve(question.Name, question.Class, question.Type)
+}
+
+func (r *RecursiveResolver) Lookup(name string, class, t uint16) (rr.RR, error) {
 	var glueFound bool
 	var ip = r.Hint()
 
@@ -111,18 +115,12 @@ func (r *RecursiveResolver) Resolve(name string, class, t uint16) (rr.RR, error)
 		}
 
 		// If we are here we did get a response but with no content
-		return nil, ErrNoData
+		return nil, ErrNoAnswer
 	}
 }
 
-// ResolveQuestion is a convenience function which allows to provide a DNS question instead of individual parameters
-func (r *RecursiveResolver) ResolveQuestion(question dns.Question) (rr.RR, error) {
-	return r.Resolve(question.Name, question.Class, question.Type)
-}
-
-// Cache provides access to a cache instance to store answers from remote DNS servers for the given TTL
-func (r *RecursiveResolver) Cache() cache.Cache {
-	return r.cache
+func (r *RecursiveResolver) Refresh(name string, class, t uint16) {
+	return
 }
 
 // Hint returns a root hint

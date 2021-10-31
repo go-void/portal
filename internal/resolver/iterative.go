@@ -1,8 +1,6 @@
 package resolver
 
 import (
-	"net"
-
 	"github.com/go-void/portal/internal/cache"
 	"github.com/go-void/portal/internal/client"
 	"github.com/go-void/portal/internal/types/dns"
@@ -14,7 +12,7 @@ type IterativeResolver struct {
 	// external DNS servers
 	Client client.Client
 
-	cache cache.Cache
+	Cache cache.Cache
 }
 
 // NewIterativeResolver returns a new iterative resolver
@@ -25,15 +23,17 @@ func NewIterativeResolver() *IterativeResolver {
 }
 
 // Resolve resolves a query by answering with a DNS server which is closer to the quried name
-func (r *IterativeResolver) Resolve(question dns.Question) (rr.RR, error) {
-	// TODO (Techassi): Which IP should we use here?
-	response, err := r.Client.Query(question.Name, question.Class, question.Type, net.IP{})
-	if err != nil {
-		return nil, err
-	}
-	return response.Answer[0], nil
+func (r *IterativeResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
+	// TODO (Techassi): Create answer with referals to external DNS servers
+	return nil, nil
 }
 
-func (r *IterativeResolver) Cache() cache.Cache {
-	return r.cache
+func (r *IterativeResolver) ResolveQuestion(question dns.Question) (rr.RR, error) {
+	return r.Resolve(question.Name, question.Class, question.Type)
 }
+
+func (r *IterativeResolver) Lookup(name string, class, t uint16) (rr.RR, error) {
+	return nil, nil
+}
+
+func (r *IterativeResolver) Refresh(name string, class, t uint16) {}

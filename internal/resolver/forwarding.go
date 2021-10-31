@@ -28,9 +28,10 @@ type ForwardingResolver struct {
 // NewForwardingResolver returns a new forwarding resolver
 func NewForwardingResolver(upstream net.IP, c cache.Cache) *ForwardingResolver {
 	return &ForwardingResolver{
-		Client:   client.NewDefaultClient(),
-		Upstream: upstream,
-		Cache:    c,
+		Client:     client.NewDefaultClient(),
+		Upstream:   upstream,
+		MaxExpired: 300,
+		Cache:      c,
 	}
 }
 
@@ -41,16 +42,15 @@ func (r *ForwardingResolver) Resolve(name string, class, t uint16) (rr.RR, error
 		return nil, err
 	}
 
-	fmt.Println("Cache status:", status)
-
 	if status == cache.Hit {
 		return entry.Data, nil
 	}
 
 	if status == cache.Expired {
-		max := time.Now().Add(time.Duration(r.MaxExpired) * time.Second)
-		if max.Sub(entry.Expire) >= 0 {
-			// Return expired record but fetch again
+		max := entry.Expire.Add(time.Duration(r.MaxExpired) * time.Second)
+		if max.After(time.Now()) {
+			go r.Refresh(name, class, t)
+			return entry.Data, nil
 		}
 	}
 
@@ -85,5 +85,14 @@ func (r *ForwardingResolver) Lookup(name string, class, t uint16) (rr.RR, error)
 }
 
 func (r *ForwardingResolver) Refresh(name string, class, t uint16) {
-	return
+	response, err := r.Lookup(name, class, t)
+	if err != nil {
+		// NOTE (Techassi): Log this
+		return
+	}
+
+	err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+	if err != nil {
+		// NOTE (Techassi): Log this
+	}
 }
