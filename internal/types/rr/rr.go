@@ -10,6 +10,8 @@ package rr
 
 import (
 	"errors"
+	"math"
+	"time"
 )
 
 var (
@@ -92,4 +94,11 @@ func New(t uint16) (RR, error) {
 	}
 
 	return rr(), nil
+}
+
+// UpdateTTL updates the TTL of a record based on the expiry timestamp
+func UpdateTTL(record RR, expire time.Time) {
+	h := record.Header()
+	ttl := uint32(math.Max(0, (time.Until(expire)).Seconds()))
+	h.TTL = ttl
 }
