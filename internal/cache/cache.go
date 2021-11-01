@@ -24,6 +24,8 @@ type Cache interface {
 	LookupQuestion(dns.Question) (Entry, Status, error)
 
 	Set(string, uint16, uint16, rr.RR, uint32) error
+
+	SetMultiple(string, uint16, uint16, []rr.RR, uint32) error
 }
 
 // DefaultCache implements the Cache interface and stores
@@ -151,6 +153,21 @@ func (c *DefaultCache) Set(name string, class, t uint16, record rr.RR, ttl uint3
 
 	expire := time.Now().Add(time.Duration(ttl) * time.Second)
 	node.SetData(class, t, record, expire)
+
+	return nil
+}
+
+// Set sets (or adds) multiple new cache entry at (to) the same node
+func (c *DefaultCache) SetMultiple(name string, class, t uint16, records []rr.RR, ttl uint32) error {
+	node, err := c.Populate(name)
+	if err != nil {
+		return err
+	}
+
+	expire := time.Now().Add(time.Duration(ttl) * time.Second)
+	for _, record := range records {
+		node.SetData(class, t, record, expire)
+	}
 
 	return nil
 }
