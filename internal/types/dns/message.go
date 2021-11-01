@@ -123,6 +123,7 @@ func (m *Message) AddQuestion(question Question) {
 // AddAnswer adds a resource record to the answer section
 // of a DNS message
 func (m *Message) AddAnswer(record rr.RR) {
+	m.Header.IsQuery = false
 	m.Answer = append(m.Answer, record)
 	m.Header.ANCount++
 }
