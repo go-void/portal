@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/go-void/portal/internal/cache"
+	"github.com/go-void/portal/internal/config"
+	"github.com/go-void/portal/internal/constants"
 	"github.com/go-void/portal/internal/pack"
 	"github.com/go-void/portal/internal/reader"
 	"github.com/go-void/portal/internal/resolver"
@@ -26,7 +28,7 @@ var (
 // Server describes options for running a DNS server
 type Server struct {
 	// The address the server is running on (default: 0.0.0.0)
-	Address string
+	Address net.IP
 
 	// Network the server is using (default: udp)
 	Network string
@@ -105,43 +107,20 @@ type Server struct {
 	usesCache bool
 }
 
-// New creates a new DNS server instance with the provided options
-// which fallback to sane defaults
-func New(c *Config) (*Server, error) {
-	err := c.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	s := &Server{
-		Address:        c.Address,
-		Network:        c.Network,
-		Port:           c.Port,
-		UDPMessageSize: c.UDPMessageSize,
+// New creates a new DNS server instance with the provided options which fallback to sane defaults
+func New(c *config.Config) (*Server, error) {
+	server := &Server{
+		Address:        c.Server.Address,
+		Network:        c.Server.Network,
+		Port:           c.Server.Port,
+		UDPMessageSize: constants.UDPMinMessageSize,
 		messageList: sync.Pool{
-			New: createByteBuffer(c.UDPMessageSize),
+			New: createByteBuffer(constants.UDPMinMessageSize),
 		},
 		wg: sync.WaitGroup{},
 	}
 
-	err = s.init()
-	return s, err
-}
-
-// createByteBuffer returns a function which creates a slice
-// of bytes with the provided length
-func createByteBuffer(size int) func() interface{} {
-	return func() interface{} {
-		return make([]byte, size)
-	}
-}
-
-// createUDPListener creates a UDP listener
-func createUDPListener(network, address string, port int) (*net.UDPConn, error) {
-	return net.ListenUDP(network, &net.UDPAddr{
-		Port: port,
-		IP:   net.ParseIP(address),
-	})
+	return server, server.init()
 }
 
 // ListenAndServe starts the listen / respond loop of DNS messages
@@ -190,6 +169,21 @@ func (s *Server) init() error {
 	s.usesCache = s.Store.UsesCache()
 
 	return nil
+}
+
+// createByteBuffer returns a function which creates a slice of bytes with the provided length
+func createByteBuffer(size int) func() interface{} {
+	return func() interface{} {
+		return make([]byte, size)
+	}
+}
+
+// createUDPListener creates a UDP listener
+func createUDPListener(network string, address net.IP, port int) (*net.UDPConn, error) {
+	return net.ListenUDP(network, &net.UDPAddr{
+		Port: port,
+		IP:   address,
+	})
 }
 
 // serveUDP is the main listen / respond loop of DNS messages
@@ -255,8 +249,6 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	}
 
 	message.AddAnswer(record)
-	message.Header.IsQuery = false
-
 	b, err := s.Packer.Pack(message)
 	if err != nil {
 		return

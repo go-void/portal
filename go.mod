@@ -2,6 +2,9 @@ module github.com/go-void/portal
 
 go 1.17
 
-require golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6
+require golang.org/x/net v0.0.0-20211101193420-4a448f8816b3
 
-require golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
+require (
+	github.com/pelletier/go-toml v1.9.4
+	golang.org/x/sys v0.0.0-20211031064116-611d5d643895 // indirect
+)
