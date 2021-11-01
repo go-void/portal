@@ -39,7 +39,7 @@ func NewForwardingResolver(upstream net.IP, c cache.Cache) *ForwardingResolver {
 func (r *ForwardingResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
 	entry, status, err := r.Cache.Lookup(name, class, t)
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
 	}
 
 	if status == cache.Hit {

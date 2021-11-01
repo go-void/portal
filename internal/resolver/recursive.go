@@ -1,8 +1,10 @@
 package resolver
 
 import (
+	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/go-void/portal/internal/cache"
 	"github.com/go-void/portal/internal/client"
@@ -14,6 +16,8 @@ type RecursiveResolver struct {
 	// Client is a DNS client which sends queries to
 	// external DNS servers
 	Client client.Client
+
+	MaxExpired int
 
 	// hints is a slice of root DNS server hints
 	Hints []net.IP
@@ -29,16 +33,44 @@ type RecursiveResolver struct {
 }
 
 // NewRecursiveResolver returns a new recursive resolver
-func NewRecursiveResolver(hints []net.IP) *RecursiveResolver {
+func NewRecursiveResolver(hints []net.IP, c cache.Cache) *RecursiveResolver {
 	return &RecursiveResolver{
 		Client: client.NewDefaultClient(),
 		Hints:  hints,
+		Cache:  c,
 	}
 }
 
 // Resolve resolves a query by recursivly resolving it
 func (r *RecursiveResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
-	return r.Lookup(name, class, t)
+	entry, status, err := r.Cache.Lookup(name, class, t)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if status == cache.Hit {
+		return entry.Record, nil
+	}
+
+	if status == cache.Expired {
+		max := entry.Expire.Add(time.Duration(r.MaxExpired) * time.Second)
+		if max.After(time.Now()) {
+			go r.Refresh(name, class, t)
+			return entry.Record, nil
+		}
+	}
+
+	response, err := r.Lookup(name, class, t)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return response, nil
 }
 
 // ResolveQuestion is a convenience function which allows to provide a DNS question instead of individual parameters
