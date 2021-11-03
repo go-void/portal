@@ -7,26 +7,42 @@ import (
 )
 
 var (
-	ErrInvalidIPAddress = errors.New("filter: invalid ip address")
+	ErrInvalidFilterMethod = errors.New("filter: invalid filter method")
+	ErrInvalidIPAddress    = errors.New("filter: invalid ip address")
 )
 
+type RuleType int
+
+const (
+	DomainRule RuleType = iota
+	RPZRule
+)
+
+type FilterResult struct {
+	Filtered bool
+	Rule     string
+	Target   net.IP
+}
+
 type Filter interface {
-	// ParseRule parses a filter rule
 	ParseRule(string) (string, net.IP, error)
 
-	LoadFromString(string) error
+	AddRulesFromFile(RuleType, string) error
 
-	LoadFromFile(string) error
+	AddRulesFromURL(RuleType, string) error
 
-	LoadFromURL(string) error
+	AddRule(RuleType, string) error
 
-	Refresh() error
+	Match(string) (FilterResult, error)
+
+	Method() FilterMethod
 }
 
-func NewDomainFilter() Filter {
-	return &DomainFilter{}
-}
-
-func NewRPZFilter() Filter {
-	return &RPZFilter{}
+// TODO (Techassi): Make configurable
+func New() Filter {
+	return &DefaultFilter{
+		rules:        make(map[string]net.IP),
+		filterMethod: NullMethod,
+		ttl:          300,
+	}
 }
