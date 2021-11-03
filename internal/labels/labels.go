@@ -56,3 +56,12 @@ func IsValidDomain(name string) bool {
 	// TODO (Techassi): Implement this
 	return true
 }
+
+// Rootify returns the (domain) name terminated by '.' if not already present.
+// Example: example.com -> example.com. or example.com. -> example.com.
+func Rootify(name string) string {
+	if name[len(name)-1] == '.' {
+		return name
+	}
+	return name + "."
+}
