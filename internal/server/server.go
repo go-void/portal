@@ -3,12 +3,14 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 
 	"github.com/go-void/portal/internal/cache"
 	"github.com/go-void/portal/internal/config"
 	"github.com/go-void/portal/internal/constants"
+	"github.com/go-void/portal/internal/filter"
 	"github.com/go-void/portal/internal/pack"
 	"github.com/go-void/portal/internal/reader"
 	"github.com/go-void/portal/internal/resolver"
@@ -55,6 +57,10 @@ type Server struct {
 	// Packer implements the Packer interface to pack
 	// DNS messages
 	Packer pack.Packer
+
+	// Filter implements the Filter interface to enable DNS
+	// filtering
+	Filter filter.Filter
 
 	// Cache implements the Cache interface to store record
 	// data in memory for a specified TTL
@@ -155,6 +161,10 @@ func (s *Server) init() error {
 		s.AncillarySize = len(ancillary6)
 	}
 
+	f := filter.New()
+	f.AddRule(filter.DomainRule, "0.0.0.0 example.com.")
+	s.Filter = f
+
 	c := cache.NewDefaultCache()
 
 	s.Resolver = resolver.NewForwardingResolver(net.ParseIP("1.1.1.1"), c)
@@ -222,10 +232,50 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 		return
 	}
 
+	var err error
+
+	// TODO (Techassi): Clean up this filter mess
+	res, err := s.Filter.Match(message.Question[0].Name)
+	if err != nil {
+		// FIXME (Techassi): How whould we handle a filter error? Should we abort or continue (and answer the query)
+		fmt.Println(err)
+	}
+
+	if res.Filtered {
+		// FIXME (Techassi): Should we return an already altered answer RR?
+		r, err := rr.New(message.Question[0].Type)
+		if err != nil {
+			return
+		}
+
+		err = r.SetData(res.Target)
+		if err != nil {
+			return
+		}
+
+		r.SetHeader(rr.Header{
+			Name:     message.Question[0].Name,
+			Type:     message.Question[0].Type,
+			Class:    message.Question[0].Class,
+			TTL:      300,
+			RDLength: r.Len(),
+		})
+
+		message.AddAnswer(r)
+		b, err := s.Packer.Pack(message)
+		if err != nil {
+			return
+		}
+
+		s.writeUDP(b, session)
+		s.wg.Done()
+		return
+	}
+
+	// TODO (Techassi): Clean this up. Is there a more elegant solution?
 	var status cache.Status
 	var entry cache.Entry
 	var record rr.RR
-	var err error
 
 	// First look in cache if we get a hit
 	if s.usesCache {
