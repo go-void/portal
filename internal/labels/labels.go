@@ -4,10 +4,11 @@ import (
 	"strings"
 )
 
-// FromRoot returns a slice of labels of a domain
-// name originating from root.
+// FromRoot returns a slice of labels of a domain name originating from root.
 // Example: example.com. => . -> com -> example
 func FromRoot(name string) []string {
+	// TODO (Techassi): Check if the provided name / domain is valid (E.g. example..com is invalid)
+
 	var o []string
 	var l = len(name)
 	var c = l
@@ -32,8 +33,8 @@ func FromRoot(name string) []string {
 	return o
 }
 
-// FromBottom returns a slice of labels of a domain
-// name bottom up. Example: example.com. => example -> com -> .
+// FromBottom returns a slice of labels of a domain name bottom up.
+// Example: example.com. => example -> com -> .
 func FromBottom(name string) []string {
 	var o []string
 
@@ -49,4 +50,9 @@ func FromBottom(name string) []string {
 	}
 
 	return o
+}
+
+func IsValidDomain(name string) bool {
+	// TODO (Techassi): Implement this
+	return true
 }
