@@ -162,7 +162,7 @@ func (s *Server) init() error {
 	}
 
 	f := filter.New()
-	f.AddRule(filter.DomainRule, "0.0.0.0 example.com.")
+	f.AddRule(filter.DomainRule, "example.com.")
 	s.Filter = f
 
 	c := cache.NewDefaultCache()
@@ -232,43 +232,18 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 		return
 	}
 
+	// TODO (Techassi): Support ANY queries
+
 	var err error
 
-	// TODO (Techassi): Clean up this filter mess
-	res, err := s.Filter.Match(message.Question[0].Name)
+	filtered, message, err := s.Filter.Match(message)
 	if err != nil {
 		// FIXME (Techassi): How whould we handle a filter error? Should we abort or continue (and answer the query)
 		fmt.Println(err)
 	}
 
-	if res.Filtered {
-		// FIXME (Techassi): Should we return an already altered answer RR?
-		r, err := rr.New(message.Question[0].Type)
-		if err != nil {
-			return
-		}
-
-		err = r.SetData(res.Target)
-		if err != nil {
-			return
-		}
-
-		r.SetHeader(rr.Header{
-			Name:     message.Question[0].Name,
-			Type:     message.Question[0].Type,
-			Class:    message.Question[0].Class,
-			TTL:      300,
-			RDLength: r.Len(),
-		})
-
-		message.AddAnswer(r)
-		b, err := s.Packer.Pack(message)
-		if err != nil {
-			return
-		}
-
-		s.writeUDP(b, session)
-		s.wg.Done()
+	if filtered {
+		s.writeMessage(message, session)
 		return
 	}
 
@@ -299,17 +274,10 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	}
 
 	message.AddAnswer(record)
-	b, err := s.Packer.Pack(message)
-	if err != nil {
-		return
-	}
-
-	s.writeUDP(b, session)
-	s.wg.Done()
+	s.writeMessage(message, session)
 }
 
-// readUDP reads a UDP message from the UDP connection by retrieving
-// a byte buffer from the message pool
+// readUDP reads a UDP message from the UDP connection by retrieving a byte buffer from the message pool
 func (s *Server) readUDP() ([]byte, dns.Session, error) {
 	rm := s.messageList.Get().([]byte)
 	mn, session, err := s.Reader.ReadUDP(s.UDPListener, rm)
@@ -318,6 +286,17 @@ func (s *Server) readUDP() ([]byte, dns.Session, error) {
 		return nil, session, err
 	}
 	return rm[:mn], session, nil
+}
+
+// writeMessage packs a DNS message and writes it back to the requesting DNS client
+func (s *Server) writeMessage(message dns.Message, session dns.Session) {
+	b, err := s.Packer.Pack(message)
+	if err != nil {
+		return
+	}
+
+	s.writeUDP(b, session)
+	s.wg.Done()
 }
 
 // writeUDPP writes a message (byte slice) back to the requesting client
