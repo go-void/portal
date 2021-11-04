@@ -15,5 +15,6 @@ portal
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-root.hints
+blocklist.txt
 _gen_rrs.go
+root.hints
