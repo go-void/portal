@@ -87,7 +87,7 @@ type Server struct {
 
 	// AncillarySize is the maximum size required to store
 	// ancillary data of UDP messages. This is culculated
-	// beforehand to avoid re-calculation the same size
+	// beforehand to avoid re-calculation of the same size
 	// over and over again
 	AncillarySize int
 
@@ -113,20 +113,16 @@ type Server struct {
 	usesCache bool
 }
 
-// New creates a new DNS server instance with the provided options which fallback to sane defaults
-func New(c *config.Config) (*Server, error) {
+// New creates a new DNS server instance
+func New() *Server {
 	server := &Server{
-		Address:        c.Server.Address,
-		Network:        c.Server.Network,
-		Port:           c.Server.Port,
 		UDPMessageSize: constants.UDPMinMessageSize,
-		messageList: sync.Pool{
-			New: createByteBuffer(constants.UDPMinMessageSize),
-		},
-		wg: sync.WaitGroup{},
+		messageList:    sync.Pool{},
+		wg:             sync.WaitGroup{},
 	}
+	server.messageList.New = createByteBuffer(constants.UDPMinMessageSize)
 
-	return server, server.init()
+	return server
 }
 
 // ListenAndServe starts the listen / respond loop of DNS messages
@@ -150,8 +146,9 @@ func (s *Server) ListenAndServe() error {
 	return ErrNoSuchNetwork
 }
 
-// init initializes some server parameters
-func (s *Server) init() error {
+// Configure initializes default server parameters and checks if all neccesary components are registered. If not it
+// falls back to defaults. This functions expects a validated config.Config
+func (s *Server) Configure(c *config.Config) {
 	ancillary4 := ipv4.NewControlMessage(ipv4.FlagDst | ipv4.FlagInterface)
 	ancillary6 := ipv6.NewControlMessage(ipv6.FlagDst | ipv6.FlagInterface)
 
@@ -161,24 +158,50 @@ func (s *Server) init() error {
 		s.AncillarySize = len(ancillary6)
 	}
 
-	f := filter.New()
-	f.AddRule(filter.DomainRule, "example.com.")
-	s.Filter = f
+	s.Address = c.Server.Address
+	s.Network = c.Server.Network
+	s.Port = c.Server.Port
 
-	c := cache.NewDefaultCache()
+	if s.Filter == nil {
+		s.Filter = filter.New()
+	}
 
-	s.Resolver = resolver.NewForwardingResolver(net.ParseIP("1.1.1.1"), c)
+	if s.Cache == nil {
+		s.Cache = cache.NewDefaultCache()
+		s.usesCache = true
+	}
 
-	s.Unpacker = pack.NewDefaultUnpacker()
-	s.Packer = pack.NewDefaultPacker()
+	if s.Resolver == nil {
+		switch c.Resolver.Mode {
+		case "r":
+			// TODO (Techassi): Adjust API, provide path to hints file instead of the hints itself
+			s.Resolver = resolver.NewRecursiveResolver([]net.IP{}, s.Cache)
+		case "i":
+			s.Resolver = resolver.NewIterativeResolver()
+		case "f":
+			s.Resolver = resolver.NewForwardingResolver(c.Resolver.Upstream, s.Cache)
+		}
+	}
 
-	s.Reader = reader.NewDefault(s.AncillarySize)
-	s.AcceptFunc = DefaultAcceptFunc
+	if s.Unpacker == nil {
+		s.Unpacker = pack.NewDefaultUnpacker()
+	}
 
-	s.Store = store.NewDefaultStore()
-	s.usesCache = s.Store.UsesCache()
+	if s.Packer == nil {
+		s.Packer = pack.NewDefaultPacker()
+	}
 
-	return nil
+	if s.Reader == nil {
+		s.Reader = reader.NewDefault(s.AncillarySize)
+	}
+
+	if s.AcceptFunc == nil {
+		s.AcceptFunc = DefaultAcceptFunc
+	}
+
+	if s.Store == nil {
+		s.Store = store.NewDefault()
+	}
 }
 
 // createByteBuffer returns a function which creates a slice of bytes with the provided length
@@ -232,7 +255,7 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 		return
 	}
 
-	// TODO (Techassi): Support ANY queries
+	// TODO (Techassi): Add support for ANY queries
 
 	var err error
 
@@ -252,20 +275,15 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 	var entry cache.Entry
 	var record rr.RR
 
-	// First look in cache if we get a hit
 	if s.usesCache {
 		entry, status, err = s.Cache.LookupQuestion(message.Question[0])
 		record = entry.Record
 	}
 
-	// If we don't get a cache hit or we simply use no cache retrieve record data from the store
 	if status != cache.Hit || !s.usesCache {
 		record, err = s.Store.Get(message.Question[0])
 	}
 
-	// At this point neither the cache or the store stores
-	// the record data. We then try to resolve the name
-	// via the resolver
 	if err != nil {
 		record, err = s.Resolver.ResolveQuestion(message.Question[0])
 		if err != nil {

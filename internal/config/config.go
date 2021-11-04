@@ -21,6 +21,7 @@ var (
 type Config struct {
 	Server   ServerOptions   `toml:"server"`
 	Resolver ResolverOptions `toml:"resolver"`
+	Filter   FilterOptions   `toml:"filter"`
 }
 
 type ServerOptions struct {
@@ -36,6 +37,14 @@ type ResolverOptions struct {
 	Mode        string `toml:"mode"`
 	HintPath    string `toml:"hint_path"`
 	MaxExpire   int    `toml:"max_expire"`
+}
+
+type FilterOptions struct {
+	TTL           int    `toml:"ttl"`
+	Mode          string `toml:"mode"`
+	WatchURLS     bool   `toml:"watch_urls"`
+	WatchFiles    bool   `toml:"watch_files"`
+	WatchInterval int    `toml:"watch_interval"`
 }
 
 // Reads the contents of the config file and returns the options as a config struct

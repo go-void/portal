@@ -67,6 +67,16 @@ type DefaultFilter struct {
 	// Address defines the IP address of this DNS server
 	Address net.IP
 
+	// WatchURLS indicates if URL watching is enabled
+	WatchURLS bool
+
+	// WatchFiles indicates if file watching is enabled
+	WatchFiles bool
+
+	// WatchInterval defines the watch interval in which URLs should
+	// be checked for changes
+	WatchInterval int
+
 	// Rules stores a map of rules
 	Rules map[string]net.IP
 

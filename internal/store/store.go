@@ -24,13 +24,12 @@ type Store interface {
 	UsesCache() bool
 }
 
-// DefaultStore implements a default store based on a in-memory tree
-// structure
+// DefaultStore implements a default store based on a in-memory tree structure
 type DefaultStore struct {
 	Tree *tree.Tree
 }
 
-func NewDefaultStore() *DefaultStore {
+func NewDefault() *DefaultStore {
 	return &DefaultStore{
 		Tree: tree.New(),
 	}
