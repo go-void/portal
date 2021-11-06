@@ -2,9 +2,7 @@
 package server
 
 import (
-	"encoding/binary"
 	"errors"
-	"fmt"
 	"net"
 	"sync"
 
@@ -25,6 +23,7 @@ import (
 
 var (
 	ErrServerAlreadyRunning = errors.New("server already running")
+	ErrUnexpectedConnection = errors.New("unexpected connection")
 	ErrNoSuchNetwork        = errors.New("no such network")
 	ErrNoQuestions          = errors.New("no questions")
 )
@@ -144,7 +143,6 @@ func (s *Server) ListenAndServe() error {
 		s.UDPListener = listener
 		return s.serveUDP()
 	case "tcp", "tcp4", "tcp6":
-		fmt.Println("TCP!")
 		listener, err := createTCPListener(s.Network, s.Address, s.Port)
 		if err != nil {
 			return err
@@ -214,92 +212,6 @@ func (s *Server) Configure(c *config.Config) {
 	}
 }
 
-// serveUDP is the main listen / answer loop, which handles DNS queries and responses via UDP
-func (s *Server) serveUDP() error {
-	// FIXME (Techassi): Handle shutdown with shutdown context and signals
-	for s.isRunning() {
-		b, session, err := s.readUDP()
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(b)
-
-		header, offset, err := s.Unpacker.UnpackHeader(b)
-		if err != nil {
-			return err
-		}
-
-		switch s.AcceptFunc(header) {
-		case AcceptMessage:
-			m, err := s.Unpacker.Unpack(header, b, offset)
-			if err != nil {
-				return err
-			}
-
-			s.wg.Add(1)
-			go s.handleUDP(m, session)
-		}
-	}
-
-	return nil
-}
-
-// serveTCP is the main listen / answer loop, which handles DNS queries and responses via TCP
-func (s *Server) serveTCP() error {
-	for s.isRunning() {
-		conn, err := s.TCPListener.Accept()
-		if err != nil {
-			return err
-		}
-
-		b, err := s.Reader.ReadTCP(conn)
-		if err != nil {
-			return err
-		}
-
-		header, offset, err := s.Unpacker.UnpackHeader(b)
-		if err != nil {
-			return err
-		}
-
-		switch s.AcceptFunc(header) {
-		case AcceptMessage:
-			m, err := s.Unpacker.Unpack(header, b, offset)
-			if err != nil {
-				return err
-			}
-
-			s.wg.Add(1)
-			go s.handleTCP(m, conn)
-		}
-	}
-
-	return nil
-}
-
-// handleUDP handles name matching and returns a response message via UDP
-func (s *Server) handleUDP(message dns.Message, session dns.Session) {
-	message, err := s.handle(message)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	s.writeUDPMessage(message, session)
-}
-
-// handleTCP handles name matching and returns a response message via TCP
-func (s *Server) handleTCP(message dns.Message, conn net.Conn) {
-	message, err := s.handle(message)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	s.writeTCPMessage(message, conn)
-}
-
 // handle handles name matching and returns a response message
 func (s *Server) handle(message dns.Message) (dns.Message, error) {
 	if len(message.Question) == 0 {
@@ -344,60 +256,6 @@ func (s *Server) handle(message dns.Message) (dns.Message, error) {
 	message.AddAnswer(record)
 	message.IsResponse()
 	return message, nil
-}
-
-// readUDP reads a UDP message from the UDP connection by retrieving a byte buffer from the message pool
-func (s *Server) readUDP() ([]byte, dns.Session, error) {
-	rm := s.messageList.Get().([]byte)
-	mn, session, err := s.Reader.ReadUDP(s.UDPListener, rm)
-	if err != nil {
-		s.messageList.Put(rm)
-		return nil, session, err
-	}
-	return rm[:mn], session, nil
-}
-
-// writeUDPMessage packs a DNS message and writes it back to the requesting DNS client via UDP
-func (s *Server) writeUDPMessage(message dns.Message, session dns.Session) {
-	defer s.wg.Done()
-
-	b, err := s.Packer.Pack(message)
-	if err != nil {
-		// Handle
-		return
-	}
-
-	_, err = s.UDPListener.WriteToUDP(b, session.Address)
-	if err != nil {
-		// Handle
-		return
-	}
-}
-
-// writeTCPMessage packs a DNS message and writes it back to the requesting DNS client via TCP
-func (s *Server) writeTCPMessage(message dns.Message, conn net.Conn) {
-	defer func() {
-		s.wg.Done()
-		// conn.Close()
-	}()
-
-	b, err := s.Packer.Pack(message)
-	if err != nil {
-		// Handle
-		return
-	}
-
-	// TODO (Techassi): Create Writer interface which abstracts writing messages
-	m := make([]byte, len(b)+2)
-	binary.BigEndian.PutUint16(m, uint16(len(b)))
-	copy(m[2:], b)
-
-	_, err = conn.Write(m)
-	if err != nil {
-		// Handle
-		fmt.Println(err)
-		return
-	}
 }
 
 // isRunning returns if the server instance is running
