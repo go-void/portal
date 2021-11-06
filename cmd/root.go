@@ -13,11 +13,10 @@ func Execute() error {
 		Name:  "portal",
 		Usage: "portal runs a DNS server",
 		Action: func(c *cli.Context) error {
-			s := server.New()
-			s.Configure(&config.Config{
+			cfg := &config.Config{
 				Server: config.ServerOptions{
 					RawAddress: "127.0.0.1",
-					Network:    "udp",
+					Network:    "tcp",
 					Port:       8553,
 				},
 				Resolver: config.ResolverOptions{
@@ -28,7 +27,15 @@ func Execute() error {
 					TTL:  300,
 					Mode: "null",
 				},
-			})
+			}
+
+			err := cfg.Validate()
+			if err != nil {
+				return err
+			}
+
+			s := server.New()
+			s.Configure(cfg)
 
 			return s.ListenAndServe()
 		},

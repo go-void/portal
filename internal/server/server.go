@@ -2,6 +2,7 @@
 package server
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
@@ -23,8 +24,9 @@ import (
 )
 
 var (
-	ErrServerAlreadyRunning = errors.New("Server already running")
-	ErrNoSuchNetwork        = errors.New("No such network")
+	ErrServerAlreadyRunning = errors.New("server already running")
+	ErrNoSuchNetwork        = errors.New("no such network")
+	ErrNoQuestions          = errors.New("no questions")
 )
 
 // Server describes options for running a DNS server
@@ -40,7 +42,7 @@ type Server struct {
 
 	// If the server is running in TCP mode, this listener
 	// listens for incoming DNS messages
-	TCPListener net.TCPListener
+	TCPListener *net.TCPListener
 
 	// If the server us running in UDP mode, this listener
 	// listens for incoming UDP messages
@@ -141,6 +143,14 @@ func (s *Server) ListenAndServe() error {
 		}
 		s.UDPListener = listener
 		return s.serveUDP()
+	case "tcp", "tcp4", "tcp6":
+		fmt.Println("TCP!")
+		listener, err := createTCPListener(s.Network, s.Address, s.Port)
+		if err != nil {
+			return err
+		}
+		s.TCPListener = listener
+		return s.serveTCP()
 	}
 
 	return ErrNoSuchNetwork
@@ -204,25 +214,46 @@ func (s *Server) Configure(c *config.Config) {
 	}
 }
 
-// createByteBuffer returns a function which creates a slice of bytes with the provided length
-func createByteBuffer(size int) func() interface{} {
-	return func() interface{} {
-		return make([]byte, size)
-	}
-}
-
-// createUDPListener creates a UDP listener
-func createUDPListener(network string, address net.IP, port int) (*net.UDPConn, error) {
-	return net.ListenUDP(network, &net.UDPAddr{
-		Port: port,
-		IP:   address,
-	})
-}
-
-// serveUDP is the main listen / respond loop of DNS messages
+// serveUDP is the main listen / answer loop, which handles DNS queries and responses via UDP
 func (s *Server) serveUDP() error {
+	// FIXME (Techassi): Handle shutdown with shutdown context and signals
 	for s.isRunning() {
 		b, session, err := s.readUDP()
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(b)
+
+		header, offset, err := s.Unpacker.UnpackHeader(b)
+		if err != nil {
+			return err
+		}
+
+		switch s.AcceptFunc(header) {
+		case AcceptMessage:
+			m, err := s.Unpacker.Unpack(header, b, offset)
+			if err != nil {
+				return err
+			}
+
+			s.wg.Add(1)
+			go s.handleUDP(m, session)
+		}
+	}
+
+	return nil
+}
+
+// serveTCP is the main listen / answer loop, which handles DNS queries and responses via TCP
+func (s *Server) serveTCP() error {
+	for s.isRunning() {
+		conn, err := s.TCPListener.Accept()
+		if err != nil {
+			return err
+		}
+
+		b, err := s.Reader.ReadTCP(conn)
 		if err != nil {
 			return err
 		}
@@ -240,34 +271,53 @@ func (s *Server) serveUDP() error {
 			}
 
 			s.wg.Add(1)
-			go s.handle(m, session)
+			go s.handleTCP(m, conn)
 		}
 	}
 
 	return nil
 }
 
-// handle handles name matching and returns a response message
-func (s *Server) handle(message dns.Message, session dns.Session) {
-	// If we don't have a question just return
-	if len(message.Question) == 0 {
-		s.wg.Done()
+// handleUDP handles name matching and returns a response message via UDP
+func (s *Server) handleUDP(message dns.Message, session dns.Session) {
+	message, err := s.handle(message)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	// TODO (Techassi): Add support for ANY queries
+	s.writeUDPMessage(message, session)
+}
 
+// handleTCP handles name matching and returns a response message via TCP
+func (s *Server) handleTCP(message dns.Message, conn net.Conn) {
+	message, err := s.handle(message)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	s.writeTCPMessage(message, conn)
+}
+
+// handle handles name matching and returns a response message
+func (s *Server) handle(message dns.Message) (dns.Message, error) {
+	if len(message.Question) == 0 {
+		s.wg.Done()
+		return message, ErrNoQuestions
+	}
+
+	// TODO (Techassi): Add support for ANY queries
 	var err error
 
 	filtered, message, err := s.Filter.Match(message)
 	if err != nil {
 		// FIXME (Techassi): How whould we handle a filter error? Should we abort or continue (and answer the query)
-		fmt.Println(err)
+		return message, err
 	}
 
 	if filtered {
-		s.writeMessage(message, session)
-		return
+		return message, nil
 	}
 
 	// TODO (Techassi): Clean this up. Is there a more elegant solution?
@@ -286,13 +336,14 @@ func (s *Server) handle(message dns.Message, session dns.Session) {
 
 	if err != nil {
 		record, err = s.Resolver.ResolveQuestion(message.Question[0])
-		if err != nil {
-			return
+		if err != nil && !errors.Is(err, resolver.ErrNoAnswer) {
+			return message, err
 		}
 	}
 
 	message.AddAnswer(record)
-	s.writeMessage(message, session)
+	message.IsResponse()
+	return message, nil
 }
 
 // readUDP reads a UDP message from the UDP connection by retrieving a byte buffer from the message pool
@@ -306,22 +357,46 @@ func (s *Server) readUDP() ([]byte, dns.Session, error) {
 	return rm[:mn], session, nil
 }
 
-// writeMessage packs a DNS message and writes it back to the requesting DNS client
-func (s *Server) writeMessage(message dns.Message, session dns.Session) {
+// writeUDPMessage packs a DNS message and writes it back to the requesting DNS client via UDP
+func (s *Server) writeUDPMessage(message dns.Message, session dns.Session) {
+	defer s.wg.Done()
+
 	b, err := s.Packer.Pack(message)
 	if err != nil {
+		// Handle
 		return
 	}
 
-	s.writeUDP(b, session)
-	s.wg.Done()
-}
-
-// writeUDPP writes a message (byte slice) back to the requesting client
-func (s *Server) writeUDP(b []byte, session dns.Session) {
-	_, err := s.UDPListener.WriteToUDP(b, session.Address)
+	_, err = s.UDPListener.WriteToUDP(b, session.Address)
 	if err != nil {
 		// Handle
+		return
+	}
+}
+
+// writeTCPMessage packs a DNS message and writes it back to the requesting DNS client via TCP
+func (s *Server) writeTCPMessage(message dns.Message, conn net.Conn) {
+	defer func() {
+		s.wg.Done()
+		// conn.Close()
+	}()
+
+	b, err := s.Packer.Pack(message)
+	if err != nil {
+		// Handle
+		return
+	}
+
+	// TODO (Techassi): Create Writer interface which abstracts writing messages
+	m := make([]byte, len(b)+2)
+	binary.BigEndian.PutUint16(m, uint16(len(b)))
+	copy(m[2:], b)
+
+	_, err = conn.Write(m)
+	if err != nil {
+		// Handle
+		fmt.Println(err)
+		return
 	}
 }
 

@@ -113,6 +113,10 @@ func (h *Header) ToRaw() RawHeader {
 	return rh
 }
 
+func (m *Message) IsResponse() {
+	m.Header.IsQuery = false
+}
+
 // AddQuestion adds a question to the question section
 // of a DNS message
 func (m *Message) AddQuestion(question Question) {
@@ -123,7 +127,10 @@ func (m *Message) AddQuestion(question Question) {
 // AddAnswer adds a resource record to the answer section
 // of a DNS message
 func (m *Message) AddAnswer(record rr.RR) {
-	m.Header.IsQuery = false
+	if record == nil {
+		return
+	}
+
 	m.Answer = append(m.Answer, record)
 	m.Header.ANCount++
 }
@@ -131,6 +138,10 @@ func (m *Message) AddAnswer(record rr.RR) {
 // AddAuthority adds a resource record to the
 // authoritative name server section
 func (m *Message) AddAuthority(record rr.RR) {
+	if record == nil {
+		return
+	}
+
 	m.Answer = append(m.Authority, record)
 	m.Header.NSCount++
 }
@@ -138,6 +149,10 @@ func (m *Message) AddAuthority(record rr.RR) {
 // AddAdditional adds a resource record to the
 // additional section
 func (m *Message) AddAdditional(record rr.RR) {
+	if record == nil {
+		return
+	}
+
 	m.Additional = append(m.Additional, record)
 	m.Header.ARCount++
 }

@@ -123,7 +123,7 @@ func (c *DefaultCache) Lookup(name string, class, t uint16) (Entry, Status, erro
 
 	entry, err := node.Entry(class, t)
 	if err != nil {
-		return Entry{}, Miss, err
+		return Entry{}, Miss, nil
 	}
 
 	status := Hit

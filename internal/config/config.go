@@ -3,12 +3,8 @@ package config
 import (
 	"errors"
 	"net"
-	"os"
-	"path/filepath"
 
 	"github.com/go-void/portal/internal/utils"
-
-	toml "github.com/pelletier/go-toml"
 )
 
 var (
@@ -48,41 +44,41 @@ type FilterOptions struct {
 }
 
 // Reads the contents of the config file and returns the options as a config struct
-func Read(path string) (*Config, error) {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return nil, err
-	}
+// func Read(path string) (*Config, error) {
+// 	path, err := filepath.Abs(path)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	c := new(Config)
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
+// 	c := new(Config)
+// 	b, err := os.ReadFile(path)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	err = toml.Unmarshal(b, c)
-	if err != nil {
-		return nil, err
-	}
+// 	err = toml.Unmarshal(b, c)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return c, nil
-}
+// 	return c, nil
+// }
 
-// Writes the config struct as a config file onto the disk
-func Write(path string, c *Config) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
+// // Writes the config struct as a config file onto the disk
+// func Write(path string, c *Config) error {
+// 	file, err := os.Create(path)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	b, err := toml.Marshal(c)
-	if err != nil {
-		return err
-	}
+// 	b, err := toml.Marshal(c)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = file.Write(b)
-	return err
-}
+// 	_, err = file.Write(b)
+// 	return err
+// }
 
 func (c *Config) Validate() error {
 	aip := net.ParseIP(c.Server.RawAddress)
@@ -91,7 +87,7 @@ func (c *Config) Validate() error {
 	}
 	c.Server.Address = aip
 
-	if !utils.In(c.Server.Network, []string{"udp", "udp4", "udp6"}) {
+	if !utils.In(c.Server.Network, []string{"udp", "udp4", "udp6", "tcp", "tcp4", "tcp6"}) {
 		return ErrInvalidServerNetwork
 	}
 

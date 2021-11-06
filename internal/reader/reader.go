@@ -1,6 +1,8 @@
 package reader
 
 import (
+	"encoding/binary"
+	"io"
 	"net"
 
 	"github.com/go-void/portal/internal/types/dns"
@@ -15,6 +17,8 @@ type Reader interface {
 	// returns the message as a slice of bytes, the length of the
 	// read message, session data or an error
 	ReadUDP(*net.UDPConn, []byte) (int, dns.Session, error)
+
+	ReadTCP(net.Conn) ([]byte, error)
 }
 
 type DefaultReader struct {
@@ -27,8 +31,7 @@ func NewDefault(ancillarySize int) Reader {
 	}
 }
 
-// ReadUDP reads a single message from a UDP connection and
-// returns the message as a slice of bytes, the length of the
+// ReadUDP reads a single message from a UDP connection and returns the message as a slice of bytes, the length of the
 // read message, session data or an error
 func (r *DefaultReader) ReadUDP(c *net.UDPConn, message []byte) (int, dns.Session, error) {
 	ancillary := make([]byte, r.AncillarySize)
@@ -42,4 +45,21 @@ func (r *DefaultReader) ReadUDP(c *net.UDPConn, message []byte) (int, dns.Sessio
 	session.Address = addr
 	session.Additional = ancillary[:ancillaryn]
 	return mn, session, nil
+}
+
+func (r *DefaultReader) ReadTCP(conn net.Conn) ([]byte, error) {
+	var length uint16
+
+	err := binary.Read(conn, binary.BigEndian, &length)
+	if err != nil {
+		return nil, err
+	}
+
+	message := make([]byte, length)
+	_, err = io.ReadFull(conn, message)
+	if err != nil {
+		return nil, err
+	}
+
+	return message, nil
 }
