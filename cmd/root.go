@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/go-void/portal/cmd/cli"
-	"github.com/go-void/portal/internal/config"
-	"github.com/go-void/portal/internal/server"
+	"github.com/go-void/portal/pkg/config"
+	"github.com/go-void/portal/pkg/server"
 )
 
 func Execute() error {
