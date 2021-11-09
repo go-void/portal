@@ -14,4 +14,9 @@ block) DNS queries.
 -   Message compression [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.4)
 -   Master Files (Lexing + Parsing) [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-5)
 -   Implement RPZs [DRAFT Vixie DNS RPZ](https://datatracker.ietf.org/doc/html/draft-vixie-dns-rpz-00)
+
+## RFS to implement
+
+-   LOC RR [RFC 1876](https://datatracker.ietf.org/doc/html/rfc1876)
+-   Serial Number Arithmetic [RFC 1982](https://datatracker.ietf.org/doc/html/rfc1982)
 -   Implement EDNS [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
