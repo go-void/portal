@@ -37,14 +37,14 @@ func (r *DefaultReader) ReadUDP(c *net.UDPConn, message []byte) (int, dns.Sessio
 	ancillary := make([]byte, r.AncillarySize)
 	session := dns.Session{}
 
-	mn, ancillaryn, _, addr, err := c.ReadMsgUDP(message, ancillary)
+	messageLen, ancillaryLen, _, addr, err := c.ReadMsgUDP(message, ancillary)
 	if err != nil {
-		return mn, session, err
+		return messageLen, session, err
 	}
 
 	session.Address = addr
-	session.Additional = ancillary[:ancillaryn]
-	return mn, session, nil
+	session.Additional = ancillary[:ancillaryLen]
+	return messageLen, session, nil
 }
 
 func (r *DefaultReader) ReadTCP(conn net.Conn) ([]byte, error) {
