@@ -36,49 +36,9 @@ type ResolverOptions struct {
 }
 
 type FilterOptions struct {
-	TTL           int    `toml:"ttl"`
-	Mode          string `toml:"mode"`
-	WatchURLS     bool   `toml:"watch_urls"`
-	WatchFiles    bool   `toml:"watch_files"`
-	WatchInterval int    `toml:"watch_interval"`
+	TTL  int    `toml:"ttl"`
+	Mode string `toml:"mode"`
 }
-
-// Reads the contents of the config file and returns the options as a config struct
-// func Read(path string) (*Config, error) {
-// 	path, err := filepath.Abs(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	c := new(Config)
-// 	b, err := os.ReadFile(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	err = toml.Unmarshal(b, c)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return c, nil
-// }
-
-// // Writes the config struct as a config file onto the disk
-// func Write(path string, c *Config) error {
-// 	file, err := os.Create(path)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	b, err := toml.Marshal(c)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	_, err = file.Write(b)
-// 	return err
-// }
 
 func (c *Config) Validate() error {
 	aip := net.ParseIP(c.Server.RawAddress)
