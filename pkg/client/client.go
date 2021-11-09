@@ -2,8 +2,8 @@
 package client
 
 import (
+	"encoding/binary"
 	"errors"
-	"fmt"
 	"math"
 	"math/rand"
 	"net"
@@ -11,9 +11,14 @@ import (
 	"time"
 
 	"github.com/go-void/portal/pkg/pack"
+	"github.com/go-void/portal/pkg/reader"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/opcode"
 	"github.com/go-void/portal/pkg/types/rcode"
+	"github.com/go-void/portal/pkg/utils"
+
+	"golang.org/x/net/ipv4"
+	"golang.org/x/net/ipv6"
 )
 
 var (
@@ -30,7 +35,7 @@ type Client interface {
 	// QueryUDP sends a DNS query using UDP
 	QueryUDP(dns.Message, net.IP) (dns.Message, error)
 
-	// QueryTCO sends a DNS query using TCP
+	// QueryTCP sends a DNS query using TCP
 	QueryTCP(dns.Message, net.IP) (dns.Message, error)
 
 	// CreateMessage returns a new DNS message
@@ -40,11 +45,11 @@ type Client interface {
 	// with sensible client defaults
 	CreateHeader() dns.Header
 
-	// GetID returns the current header ID and increments
-	// it by one
+	// GetID returns the current header ID and generates a new one
 	GetID() uint16
 }
 
+// DefaultClient is the default DNS client to query and retrieve DNS messages
 type DefaultClient struct {
 	// Network the client is using (default: udp)
 	Network string
@@ -57,6 +62,10 @@ type DefaultClient struct {
 	// DNS messages
 	Packer pack.Packer
 
+	// Reader implements the Reader interface to read
+	// incoming TCP and UDP messages
+	Reader reader.Reader
+
 	DialTimeout  time.Duration
 	WriteTimeout time.Duration
 	ReadTimeout  time.Duration
@@ -68,14 +77,25 @@ type DefaultClient struct {
 	lock sync.RWMutex
 }
 
-func NewDefaultClient() *DefaultClient {
+func NewDefault() *DefaultClient {
 	rand.Seed(time.Now().UnixNano())
+
+	var size = 0
+	ancillary4 := ipv4.NewControlMessage(ipv4.FlagDst | ipv4.FlagInterface)
+	ancillary6 := ipv6.NewControlMessage(ipv6.FlagDst | ipv6.FlagInterface)
+
+	if len(ancillary4) > len(ancillary6) {
+		size = len(ancillary4)
+	} else {
+		size = len(ancillary6)
+	}
 
 	// TODO (Techassi): Make Client options configurable
 	return &DefaultClient{
 		Network:      "udp",
 		Unpacker:     pack.NewDefaultUnpacker(),
 		Packer:       pack.NewDefaultPacker(),
+		Reader:       reader.NewDefault(size),
 		DialTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
 		ReadTimeout:  2 * time.Second,
@@ -105,14 +125,7 @@ func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (dns.Mess
 
 // QueryUDP sends a DNS query using UDP
 func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, error) {
-	var address string
-
-	if len(ip) == 16 {
-		address = fmt.Sprintf("%s:%d", ip.String(), 53)
-	} else {
-		address = fmt.Sprintf("[%s]:%d", ip.String(), 53)
-	}
-
+	address := utils.DNSAddress(ip)
 	conn, err := net.DialTimeout("udp", address, c.DialTimeout)
 	if err != nil {
 		return dns.Message{}, err
@@ -133,12 +146,8 @@ func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, err
 		return dns.Message{}, err
 	}
 
-	var buf = make([]byte, 512)
-	offset, err := conn.Read(buf)
-	if err != nil {
-		return dns.Message{}, err
-	}
-	buf = buf[:offset]
+	buf := make([]byte, 512)
+	c.Reader.ReadUDP(&conn, buf)
 
 	header, offset, err := c.Unpacker.UnpackHeader(buf)
 	if err != nil {
@@ -152,8 +161,33 @@ func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, err
 	return c.Unpacker.Unpack(header, buf, offset)
 }
 
-// QueryTCO sends a DNS query using TCP
+// QueryTCP sends a DNS query using TCP
 func (c *DefaultClient) QueryTCP(query dns.Message, ip net.IP) (dns.Message, error) {
+	address := utils.DNSAddress(ip)
+	conn, err := net.DialTimeout("tcp", address, c.DialTimeout)
+	if err != nil {
+		return dns.Message{}, err
+	}
+	defer conn.Close()
+
+	t := time.Now()
+	conn.SetWriteDeadline(t.Add(c.WriteTimeout))
+	conn.SetReadDeadline(t.Add(c.ReadTimeout))
+
+	b, err := c.Packer.Pack(query)
+	if err != nil {
+		return dns.Message{}, err
+	}
+
+	q := make([]byte, len(b)+2)
+	binary.BigEndian.PutUint16(q, uint16(len(b)))
+	copy(q[2:], b)
+
+	_, err = conn.Write(q)
+	if err != nil {
+		return dns.Message{}, err
+	}
+
 	return dns.Message{}, nil
 }
 
@@ -179,7 +213,7 @@ func (c *DefaultClient) CreateHeader() dns.Header {
 	}
 }
 
-// GetID returns the current header ID and increments it by one
+// GetID returns the current header ID and generates a new one
 func (c *DefaultClient) GetID() uint16 {
 	c.lock.Lock()
 	id := c.headerID

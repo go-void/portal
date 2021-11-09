@@ -28,7 +28,7 @@ type ForwardingResolver struct {
 // NewForwardingResolver returns a new forwarding resolver
 func NewForwardingResolver(upstream net.IP, c cache.Cache) *ForwardingResolver {
 	return &ForwardingResolver{
-		Client:     client.NewDefaultClient(),
+		Client:     client.NewDefault(),
 		Upstream:   upstream,
 		MaxExpired: 300,
 		Cache:      c,

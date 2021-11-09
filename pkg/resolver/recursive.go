@@ -35,7 +35,7 @@ type RecursiveResolver struct {
 // NewRecursiveResolver returns a new recursive resolver
 func NewRecursiveResolver(hints []net.IP, c cache.Cache) *RecursiveResolver {
 	return &RecursiveResolver{
-		Client: client.NewDefaultClient(),
+		Client: client.NewDefault(),
 		Hints:  hints,
 		Cache:  c,
 	}
