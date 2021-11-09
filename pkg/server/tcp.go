@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/binary"
 	"fmt"
 	"net"
 
@@ -11,7 +10,7 @@ import (
 // serveTCP is the main listen / answer loop, which handles DNS queries and responses via TCP
 func (s *Server) serveTCP() error {
 	for s.isRunning() {
-		conn, err := s.TCPListener.Accept()
+		conn, err := s.TCPListener.AcceptTCP()
 		if err != nil {
 			return err
 		}
@@ -42,7 +41,7 @@ func (s *Server) serveTCP() error {
 }
 
 // handleTCP handles name matching and returns a response message via TCP
-func (s *Server) handleTCP(message dns.Message, conn net.Conn) {
+func (s *Server) handleTCP(message dns.Message, conn *net.TCPConn) {
 	message, err := s.handle(message)
 	if err != nil {
 		fmt.Println(err)
@@ -53,11 +52,8 @@ func (s *Server) handleTCP(message dns.Message, conn net.Conn) {
 }
 
 // writeTCP packs a DNS message and writes it back to the requesting DNS client via TCP
-func (s *Server) writeTCP(message dns.Message, conn net.Conn) {
-	defer func() {
-		s.wg.Done()
-		conn.Close()
-	}()
+func (s *Server) writeTCP(message dns.Message, conn *net.TCPConn) {
+	defer s.wg.Done()
 
 	b, err := s.Packer.Pack(message)
 	if err != nil {
@@ -65,11 +61,7 @@ func (s *Server) writeTCP(message dns.Message, conn net.Conn) {
 		return
 	}
 
-	m := make([]byte, len(b)+2)
-	binary.BigEndian.PutUint16(m, uint16(len(b)))
-	copy(m[2:], b)
-
-	_, err = conn.Write(m)
+	err = s.Writer.WriteTCPClose(conn, b)
 	if err != nil {
 		// Handle
 		fmt.Println(err)

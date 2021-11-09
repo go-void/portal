@@ -67,7 +67,7 @@ func (s *Server) writeUDP(message dns.Message, session dns.Session) {
 		return
 	}
 
-	_, err = s.UDPListener.WriteToUDP(b, session.Address)
+	err = s.Writer.WriteUDP(s.UDPListener, b, session.Address)
 	if err != nil {
 		// Handle
 		return
