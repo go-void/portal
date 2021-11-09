@@ -2,7 +2,6 @@
 package client
 
 import (
-	"encoding/binary"
 	"errors"
 	"math"
 	"math/rand"
@@ -10,12 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/pack"
 	"github.com/go-void/portal/pkg/reader"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/opcode"
 	"github.com/go-void/portal/pkg/types/rcode"
 	"github.com/go-void/portal/pkg/utils"
+	"github.com/go-void/portal/pkg/writer"
 
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
@@ -27,6 +28,8 @@ var (
 )
 
 type Client interface {
+	Dial(string, net.IP) (net.Conn, error)
+
 	// Query sends a DNS query for 'name' with 'class' and 'type'
 	// to the remote DNS server with 'ip' and returns the answer
 	// message and any encountered error
@@ -66,6 +69,10 @@ type DefaultClient struct {
 	// incoming TCP and UDP messages
 	Reader reader.Reader
 
+	// Writer implements the Writer interface to write
+	// outgoing TCP and UDP messages
+	Writer writer.Writer
+
 	DialTimeout  time.Duration
 	WriteTimeout time.Duration
 	ReadTimeout  time.Duration
@@ -80,7 +87,7 @@ type DefaultClient struct {
 func NewDefault() *DefaultClient {
 	rand.Seed(time.Now().UnixNano())
 
-	var size = 0
+	var size int
 	ancillary4 := ipv4.NewControlMessage(ipv4.FlagDst | ipv4.FlagInterface)
 	ancillary6 := ipv6.NewControlMessage(ipv6.FlagDst | ipv6.FlagInterface)
 
@@ -103,6 +110,20 @@ func NewDefault() *DefaultClient {
 	}
 }
 
+func (c *DefaultClient) Dial(network string, ip net.IP) (net.Conn, error) {
+	address := utils.DNSAddress(ip)
+	conn, err := net.DialTimeout(network, address, c.DialTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	t := time.Now()
+	conn.SetWriteDeadline(t.Add(c.WriteTimeout))
+	conn.SetReadDeadline(t.Add(c.ReadTimeout))
+
+	return conn, nil
+}
+
 // Query sends a DNS query for 'name' with 'class' and 'type' to the remote DNS server with 'ip'
 // and returns the answer message and any encountered error
 func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (dns.Message, error) {
@@ -123,32 +144,36 @@ func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (dns.Mess
 	return dns.Message{}, ErrInvalidNetwork
 }
 
-// QueryUDP sends a DNS query using UDP
+// QueryUDP sends a DNS 'query' to a remote DNS server with 'ip' using UDP
 func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, error) {
-	address := utils.DNSAddress(ip)
-	conn, err := net.DialTimeout("udp", address, c.DialTimeout)
+	// Establish UDP connection
+	conn, err := c.Dial(c.Network, ip)
 	if err != nil {
 		return dns.Message{}, err
 	}
 	defer conn.Close()
 
-	t := time.Now()
-	conn.SetWriteDeadline(t.Add(c.WriteTimeout))
-	conn.SetReadDeadline(t.Add(c.ReadTimeout))
-
+	// Pack DNS message into wire format
 	b, err := c.Packer.Pack(query)
 	if err != nil {
 		return dns.Message{}, err
 	}
 
+	// Send query to remote DNS server
 	_, err = conn.Write(b)
 	if err != nil {
 		return dns.Message{}, err
 	}
 
-	buf := make([]byte, 512)
-	c.Reader.ReadUDP(&conn, buf)
+	// Read answer of the remote DNS server
+	buf := make([]byte, constants.UDPMinMessageSize)
+	udpConn := conn.(*net.UDPConn)
+	_, _, err = c.Reader.ReadUDP(udpConn, buf)
+	if err != nil {
+		return dns.Message{}, err
+	}
 
+	// Unpack header data
 	header, offset, err := c.Unpacker.UnpackHeader(buf)
 	if err != nil {
 		return dns.Message{}, err
@@ -158,32 +183,25 @@ func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, err
 		return dns.Message{}, ErrNoMatchHeaderID
 	}
 
+	// Unpack remaining message data
 	return c.Unpacker.Unpack(header, buf, offset)
 }
 
-// QueryTCP sends a DNS query using TCP
+// QueryTCP sends a DNS 'query' to target DNS server with 'ip' using TCP
 func (c *DefaultClient) QueryTCP(query dns.Message, ip net.IP) (dns.Message, error) {
-	address := utils.DNSAddress(ip)
-	conn, err := net.DialTimeout("tcp", address, c.DialTimeout)
+	conn, err := c.Dial(c.Network, ip)
 	if err != nil {
 		return dns.Message{}, err
 	}
 	defer conn.Close()
-
-	t := time.Now()
-	conn.SetWriteDeadline(t.Add(c.WriteTimeout))
-	conn.SetReadDeadline(t.Add(c.ReadTimeout))
 
 	b, err := c.Packer.Pack(query)
 	if err != nil {
 		return dns.Message{}, err
 	}
 
-	q := make([]byte, len(b)+2)
-	binary.BigEndian.PutUint16(q, uint16(len(b)))
-	copy(q[2:], b)
-
-	_, err = conn.Write(q)
+	tcpConn := conn.(*net.TCPConn)
+	err = c.Writer.WriteTCPClose(tcpConn, b)
 	if err != nil {
 		return dns.Message{}, err
 	}
