@@ -17,8 +17,9 @@ block) DNS queries.
 
 ## RFS to implement
 
--   LOC RR [RFC 1876](https://datatracker.ietf.org/doc/html/rfc1876)
--   Implement EDNS [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
+- LOC RR [RFC 1876](https://datatracker.ietf.org/doc/html/rfc1876)
+- Incremental Zone Transfer in DNS [RFC 1995](https://datatracker.ietf.org/doc/html/rfc1995)
+- Implement EDNS [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
 
 ## Supported RFCs
 
