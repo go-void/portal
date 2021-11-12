@@ -18,5 +18,10 @@ block) DNS queries.
 ## RFS to implement
 
 -   LOC RR [RFC 1876](https://datatracker.ietf.org/doc/html/rfc1876)
--   Serial Number Arithmetic [RFC 1982](https://datatracker.ietf.org/doc/html/rfc1982)
 -   Implement EDNS [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
+
+## Supported RFCs
+
+- Domain Names - Concepts and Facilities [RFC 1034](https://datatracker.ietf.org/doc/html/rfc1034)
+- Domain Names - Implementation and Specification [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035)
+- Serial Number Arithmetic [RFC 1982](https://datatracker.ietf.org/doc/html/rfc1982)
