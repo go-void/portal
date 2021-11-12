@@ -1,6 +1,23 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import (
+	"errors"
+
+	"github.com/go-void/portal/pkg/constants"
+	"github.com/go-void/portal/pkg/wire"
+)
+
+var (
+	ErrSOASerialOutOfRange = errors.New("serial out of range")
+)
+
+type SerialComparison int
+
+const (
+	SerialEqual SerialComparison = iota
+	SerialLess
+	SerialGreater
+)
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.13
 type SOA struct {
@@ -33,7 +50,41 @@ func (rr *SOA) SetData(data ...interface{}) error {
 	}
 	rr.MName = mname
 
-	// TODO (Techassi): Add remaining fields
+	rname, ok := data[1].(string)
+	if !ok {
+		return ErrFailedToConvertRRData
+	}
+	rr.RName = rname
+
+	serial, ok := data[2].(uint32)
+	if !ok {
+		return ErrFailedToConvertRRData
+	}
+	rr.Serial = serial
+
+	refresh, ok := data[3].(uint32)
+	if !ok {
+		return ErrFailedToConvertRRData
+	}
+	rr.Refresh = refresh
+
+	retry, ok := data[4].(uint32)
+	if !ok {
+		return ErrFailedToConvertRRData
+	}
+	rr.Retry = retry
+
+	expire, ok := data[5].(uint32)
+	if !ok {
+		return ErrFailedToConvertRRData
+	}
+	rr.Expire = expire
+
+	minimum, ok := data[6].(uint32)
+	if !ok {
+		return ErrFailedToConvertRRData
+	}
+	rr.Minimum = minimum
 
 	return nil
 }
@@ -103,4 +154,31 @@ func (rr *SOA) Pack(buf []byte, offset int) (int, error) {
 	}
 
 	return wire.PackUint32(rr.Minimum, buf, offset)
+}
+
+func (rr *SOA) SerialAdd(n int) error {
+	if n < 0 || n > constants.SerialMaxAdditon {
+		return ErrSOASerialOutOfRange
+	}
+
+	rr.Serial = (rr.Serial + uint32(n)) % constants.SerialBits
+	return nil
+}
+
+func (rr *SOA) SerialCompare(soa *SOA) SerialComparison {
+	if rr.Serial == soa.Serial {
+		return SerialEqual
+	}
+
+	if (rr.Serial < soa.Serial && soa.Serial-rr.Serial < constants.SerialMaxBits) ||
+		(rr.Serial > soa.Serial && rr.Serial-soa.Serial > constants.SerialMaxBits) {
+		return SerialLess
+	}
+
+	if (rr.Serial < soa.Serial && soa.Serial-rr.Serial > constants.SerialMaxBits) ||
+		(rr.Serial > soa.Serial && rr.Serial-soa.Serial < constants.SerialMaxBits) {
+		return SerialGreater
+	}
+
+	return SerialEqual
 }
