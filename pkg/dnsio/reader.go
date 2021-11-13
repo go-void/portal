@@ -1,4 +1,4 @@
-package reader
+package dnsio
 
 import (
 	"encoding/binary"
@@ -25,7 +25,7 @@ type DefaultReader struct {
 	AncillarySize int
 }
 
-func NewDefault(ancillarySize int) Reader {
+func NewDefaultReader(ancillarySize int) Reader {
 	return &DefaultReader{
 		AncillarySize: ancillarySize,
 	}

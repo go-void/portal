@@ -9,14 +9,13 @@ import (
 	"github.com/go-void/portal/pkg/cache"
 	"github.com/go-void/portal/pkg/config"
 	"github.com/go-void/portal/pkg/constants"
+	"github.com/go-void/portal/pkg/dnsio"
 	"github.com/go-void/portal/pkg/filter"
 	"github.com/go-void/portal/pkg/pack"
-	"github.com/go-void/portal/pkg/reader"
 	"github.com/go-void/portal/pkg/resolver"
 	"github.com/go-void/portal/pkg/store"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
-	"github.com/go-void/portal/pkg/writer"
 
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
@@ -50,11 +49,11 @@ type Server struct {
 
 	// Reader implements the Reader interface to read
 	// incoming TCP and UDP messages
-	Reader reader.Reader
+	Reader dnsio.Reader
 
 	// Writer implements the Writer interface to write
 	// outgoing TCP and UDP messages
-	Writer writer.Writer
+	Writer dnsio.Writer
 
 	// Unpacker implements the Unpacker interface to unwrap
 	// DNS messages
@@ -210,11 +209,11 @@ func (s *Server) Configure(c *config.Config) {
 	}
 
 	if s.Reader == nil {
-		s.Reader = reader.NewDefault(s.AncillarySize)
+		s.Reader = dnsio.NewDefaultReader(s.AncillarySize)
 	}
 
 	if s.Writer == nil {
-		s.Writer = writer.NewDefault()
+		s.Writer = dnsio.NewDefaultWriter()
 	}
 
 	if s.AcceptFunc == nil {

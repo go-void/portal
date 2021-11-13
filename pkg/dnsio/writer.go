@@ -1,5 +1,4 @@
-// Package writer provides functions to write DNS messages (byte slices) back to clients
-package writer
+package dnsio
 
 import (
 	"encoding/binary"
@@ -30,7 +29,7 @@ type DefaultWriter struct {
 }
 
 // NewDefault returns a new default writer
-func NewDefault() *DefaultWriter {
+func NewDefaultWriter() *DefaultWriter {
 	return &DefaultWriter{}
 }
 
