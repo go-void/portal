@@ -16,7 +16,7 @@ func Execute() error {
 			cfg := &config.Config{
 				Server: config.ServerOptions{
 					RawAddress: "127.0.0.1",
-					Network:    "tcp",
+					Network:    "udp",
 					Port:       8553,
 				},
 				Resolver: config.ResolverOptions{
@@ -26,6 +26,12 @@ func Execute() error {
 				Filter: config.FilterOptions{
 					TTL:  300,
 					Mode: "null",
+				},
+				Collector: config.CollectorOptions{
+					Anonymize:  false,
+					Enabled:    true,
+					MaxEntries: 5,
+					Interval:   10,
 				},
 			}
 

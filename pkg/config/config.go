@@ -14,10 +14,13 @@ var (
 	ErrInvalidResolverMode     = errors.New("no such resolver mode")
 )
 
+// NOTE (Techassi): Can we define the options in the packages itself?
+
 type Config struct {
-	Server   ServerOptions   `toml:"server"`
-	Resolver ResolverOptions `toml:"resolver"`
-	Filter   FilterOptions   `toml:"filter"`
+	Server    ServerOptions    `toml:"server"`
+	Resolver  ResolverOptions  `toml:"resolver"`
+	Filter    FilterOptions    `toml:"filter"`
+	Collector CollectorOptions `toml:"collector"`
 }
 
 type ServerOptions struct {
@@ -38,6 +41,13 @@ type ResolverOptions struct {
 type FilterOptions struct {
 	TTL  int    `toml:"ttl"`
 	Mode string `toml:"mode"`
+}
+
+type CollectorOptions struct {
+	Anonymize  bool `toml:"anonymize"`
+	Enabled    bool `toml:"enabled"`
+	MaxEntries int  `toml:"max_entries"`
+	Interval   uint `toml:"interval"`
 }
 
 func (c *Config) Validate() error {

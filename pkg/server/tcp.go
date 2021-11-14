@@ -42,7 +42,8 @@ func (s *Server) serveTCP() error {
 
 // handleTCP handles name matching and returns a response message via TCP
 func (s *Server) handleTCP(message dns.Message, conn *net.TCPConn) {
-	message, err := s.handle(message)
+	addr := conn.RemoteAddr().(*net.TCPAddr)
+	message, err := s.handle(message, addr.IP)
 	if err != nil {
 		fmt.Println(err)
 		return

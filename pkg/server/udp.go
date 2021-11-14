@@ -37,7 +37,7 @@ func (s *Server) serveUDP() error {
 
 // handleUDP handles name matching and returns a response message via UDP
 func (s *Server) handleUDP(message dns.Message, session dns.Session) {
-	message, err := s.handle(message)
+	message, err := s.handle(message, session.Address.IP)
 	if err != nil {
 		fmt.Println(err)
 		return

@@ -5,8 +5,10 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/go-void/portal/pkg/cache"
+	"github.com/go-void/portal/pkg/collector"
 	"github.com/go-void/portal/pkg/config"
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/dnsio"
@@ -85,6 +87,8 @@ type Server struct {
 	// the cache
 	Resolver resolver.Resolver
 
+	Collector collector.Collector
+
 	// UDPMessageSize is the default message size to create
 	// the temporary slice of bytes within the messageList
 	// pool
@@ -136,6 +140,7 @@ func (s *Server) ListenAndServe() error {
 		return ErrServerAlreadyRunning
 	}
 
+	s.Collector.Run()
 	s.running = true
 
 	switch s.Network {
@@ -200,6 +205,10 @@ func (s *Server) Configure(c *config.Config) {
 		}
 	}
 
+	if s.Collector == nil {
+		s.Collector = collector.NewDefault(c.Collector)
+	}
+
 	if s.Unpacker == nil {
 		s.Unpacker = pack.NewDefaultUnpacker()
 	}
@@ -226,13 +235,15 @@ func (s *Server) Configure(c *config.Config) {
 }
 
 // handle handles name matching and returns a response message
-func (s *Server) handle(message dns.Message) (dns.Message, error) {
+func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
+	start := time.Now()
+
 	if len(message.Question) == 0 {
 		s.wg.Done()
 		return message, ErrNoQuestions
 	}
 
-	// TODO (Techassi): Add support for ANY queries
+	// TODO (Techassi): Add support for ANY queries, see RFC 8482
 	var err error
 
 	filtered, message, err := s.Filter.Match(message)
@@ -242,6 +253,10 @@ func (s *Server) handle(message dns.Message) (dns.Message, error) {
 	}
 
 	if filtered {
+		end := time.Since(start)
+		entry := collector.NewFilteredEntry(message.Question[0], message.Answer[0], end, ip)
+		go s.Collector.AddEntry(entry)
+
 		return message, nil
 	}
 
@@ -268,6 +283,11 @@ func (s *Server) handle(message dns.Message) (dns.Message, error) {
 
 	message.AddAnswer(record)
 	message.IsResponse()
+
+	end := time.Since(start)
+	centry := collector.NewEntry(message.Question[0], message.Answer[0], end, ip)
+	go s.Collector.AddEntry(centry)
+
 	return message, nil
 }
 
