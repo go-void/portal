@@ -12,12 +12,6 @@ var (
 	ErrExtraClosingBracket = errors.New("extra closing bracket")
 )
 
-type ZoneParser interface {
-	Read() bool
-	Next() bool
-	Peek() ZoneParser
-}
-
 type Parser struct {
 	// Input byte reader
 	Reader io.ByteReader
@@ -31,17 +25,14 @@ type Parser struct {
 
 	// Current stores the current looked at byte
 	Current byte
-
-	// Positional states
-	Column int
-	Line   int
+	Buff    []Token
 
 	// Error is non-nil if the lexer encountered
 	// an error along the way of tokenizing the
 	// input
 	Error error
 
-	RRs []rr.RR
+	Tokens []Token
 }
 
 func NewParser(r io.Reader) *Parser {
@@ -55,45 +46,69 @@ func NewParser(r io.Reader) *Parser {
 	}
 }
 
-func (l *Parser) Read() bool {
+func (l *Parser) Parse() ([]Token, error) {
+	for {
+		ok := l.next()
+		if !ok {
+			break
+		}
+	}
+	return l.Tokens, l.Error
+}
+
+func (l *Parser) Records() ([]rr.RR, error) {
+
+	return nil, nil
+}
+
+func (l *Parser) read() bool {
 	c, err := l.Reader.ReadByte()
+	// TODO (Techassi): Handle EOF "error"
 	if err != nil {
 		l.Error = err
 		return false
-	}
-
-	if c == '\n' {
-		l.EOL = true
-		l.Line++
-	} else {
-		l.Column++
 	}
 
 	l.Current = c
 	return true
 }
 
-func (l *Parser) Next() bool {
+func (l *Parser) next() bool {
 	if l.Error != nil {
 		return false
 	}
 
-	for l.Read() {
+	for l.read() {
 		switch l.Current {
 		case ';':
 			if l.Quoted || l.Escaped {
 				l.Escaped = false
+				l.Buff = append(l.Buff, &Char{
+					data: ";",
+				})
 				continue
 			}
 			l.InComment = true
 		case '\n':
-			l.InComment = false
-
 			if l.Brackets > 0 {
 				continue
 			}
 
-			// We have a complete RR
+			if l.InComment {
+				t := NewToken(TypeComment)
+				t.Add(l.Buff)
+				l.Tokens = append(l.Tokens, t)
+
+				l.Buff = []Token{}
+				l.InComment = false
+				continue
+			}
+
+			t := NewToken(TypeRecord)
+			t.Add(l.Buff)
+			l.Tokens = append(l.Tokens, t)
+
+			l.Buff = []Token{}
 		case '"':
 			if l.Quoted && !l.Escaped {
 				l.Quoted = false
@@ -122,15 +137,17 @@ func (l *Parser) Next() bool {
 		case ' ', '\t':
 			if l.Escaped || l.Quoted || l.InComment {
 				l.Escaped = false
-				continue
 			}
-			// Regular RR data
+
+			t := NewToken(TypeSpace)
+			t.Add(nil)
+			l.Buff = append(l.Buff, t)
+		default:
+			l.Buff = append(l.Buff, &Char{
+				data: string(l.Current),
+			})
 		}
 	}
 
 	return true
-}
-
-func (l *Parser) Peek() Parser {
-	panic("not implemented") // TODO: Implement
 }
