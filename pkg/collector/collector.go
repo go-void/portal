@@ -3,13 +3,10 @@ package collector
 
 import (
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
 	"github.com/go-void/portal/pkg/config"
-	"github.com/go-void/portal/pkg/types/dns"
-	"github.com/go-void/portal/pkg/types/rr"
 )
 
 // Collector describes an interface which is able to collect
@@ -46,30 +43,6 @@ type DefaultCollector struct {
 	lock    sync.Mutex
 }
 
-func NewEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
-	return Entry{
-		QueryTime: queryTime,
-		Question:  question,
-		Answer:    answer,
-		Result:    "",
-		ClientIP:  ip,
-		Filtered:  false,
-		Cached:    false,
-	}
-}
-
-func NewCachedEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
-	entry := NewEntry(question, answer, queryTime, ip)
-	entry.Cached = true
-	return entry
-}
-
-func NewFilteredEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
-	entry := NewEntry(question, answer, queryTime, ip)
-	entry.Filtered = true
-	return entry
-}
-
 func NewDefault(opt config.CollectorOptions) *DefaultCollector {
 	interval := time.Duration(opt.Interval) * time.Second
 
@@ -88,7 +61,6 @@ func (c *DefaultCollector) GetEntries() ([]Entry, error) {
 
 func (c *DefaultCollector) AddEntry(entry Entry) error {
 	c.entries = append(c.entries, entry)
-	fmt.Println(c.entries)
 	if len(c.entries) >= c.MaxEntries {
 		return c.FlushEntries()
 	}
@@ -101,6 +73,11 @@ func (c *DefaultCollector) FlushEntries() error {
 
 	if len(c.entries) == 0 {
 		return nil
+	}
+
+	err := c.Store.CreateEntries(c.entries)
+	if err != nil {
+		return err
 	}
 
 	c.LastFlush = time.Now()

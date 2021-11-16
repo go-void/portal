@@ -1,0 +1,43 @@
+package collector
+
+import (
+	"net"
+	"time"
+
+	"github.com/go-void/portal/pkg/types/dns"
+	"github.com/go-void/portal/pkg/types/rr"
+)
+
+type Entry struct {
+	QueryTime time.Duration
+	Question  dns.Question
+	Answer    rr.RR
+	Result    string
+	ClientIP  net.IP
+	Filtered  bool
+	Cached    bool
+}
+
+func NewEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
+	return Entry{
+		QueryTime: queryTime,
+		Question:  question,
+		Answer:    answer,
+		Result:    "",
+		ClientIP:  ip,
+		Filtered:  false,
+		Cached:    false,
+	}
+}
+
+func NewCachedEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
+	entry := NewEntry(question, answer, queryTime, ip)
+	entry.Cached = true
+	return entry
+}
+
+func NewFilteredEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
+	entry := NewEntry(question, answer, queryTime, ip)
+	entry.Filtered = true
+	return entry
+}
