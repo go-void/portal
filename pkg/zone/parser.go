@@ -3,9 +3,11 @@ package zone
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/go-void/portal/pkg/types/rr"
+	"github.com/go-void/portal/pkg/zone/tokens"
 )
 
 var (
@@ -25,14 +27,14 @@ type Parser struct {
 
 	// Current stores the current looked at byte
 	Current byte
-	Buff    []Token
+	Buff    []tokens.Token
 
 	// Error is non-nil if the lexer encountered
 	// an error along the way of tokenizing the
 	// input
 	Error error
 
-	Tokens []Token
+	Tokens []tokens.Token
 }
 
 func NewParser(r io.Reader) *Parser {
@@ -46,13 +48,14 @@ func NewParser(r io.Reader) *Parser {
 	}
 }
 
-func (l *Parser) Parse() ([]Token, error) {
+func (l *Parser) Parse() ([]tokens.Token, error) {
 	for {
 		ok := l.next()
 		if !ok {
 			break
 		}
 	}
+	fmt.Println(len(l.Tokens))
 	return l.Tokens, l.Error
 }
 
@@ -78,37 +81,44 @@ func (l *Parser) next() bool {
 		return false
 	}
 
+	// TODO (Techassi): Handle zone files which don't end with a empty newline. Currently we discard the buff. This
+	// makes it neccesary to insert a newline at the end of file.
+
 	for l.read() {
 		switch l.Current {
 		case ';':
 			if l.Quoted || l.Escaped {
 				l.Escaped = false
-				l.Buff = append(l.Buff, &Char{
-					data: ";",
+				l.Buff = append(l.Buff, &tokens.Char{
+					Data: ";",
 				})
 				continue
 			}
 			l.InComment = true
-		case '\n':
+		case '\n', '\r':
 			if l.Brackets > 0 {
 				continue
 			}
 
+			if len(l.Buff) == 0 {
+				continue
+			}
+
 			if l.InComment {
-				t := NewToken(TypeComment)
+				t := tokens.NewToken(tokens.TypeComment)
 				t.Add(l.Buff)
 				l.Tokens = append(l.Tokens, t)
 
-				l.Buff = []Token{}
+				l.Buff = []tokens.Token{}
 				l.InComment = false
 				continue
 			}
 
-			t := NewToken(TypeRecord)
+			t := tokens.NewToken(tokens.TypeRecord)
 			t.Add(l.Buff)
 			l.Tokens = append(l.Tokens, t)
 
-			l.Buff = []Token{}
+			l.Buff = []tokens.Token{}
 		case '"':
 			if l.Quoted && !l.Escaped {
 				l.Quoted = false
@@ -116,22 +126,26 @@ func (l *Parser) next() bool {
 		case '(', ')':
 			if l.Escaped || l.Quoted {
 				l.Escaped = false
-				continue
 			}
 
 			if l.Current == '(' {
 				l.Brackets++
+				t := tokens.NewToken(tokens.TypeBracketOpen)
+				l.Buff = append(l.Buff, t)
 				continue
 			}
 
 			if l.Current == ')' {
 				l.Brackets--
-
-				if l.Brackets < 0 {
-					l.Error = ErrExtraClosingBracket
-					return false
-				}
 			}
+
+			if l.Brackets < 0 {
+				l.Error = ErrExtraClosingBracket
+				return false
+			}
+
+			t := tokens.NewToken(tokens.TypeBracketClose)
+			l.Buff = append(l.Buff, t)
 		case '\\':
 			l.Escaped = true
 		case ' ', '\t':
@@ -139,15 +153,15 @@ func (l *Parser) next() bool {
 				l.Escaped = false
 			}
 
-			t := NewToken(TypeSpace)
+			t := tokens.NewToken(tokens.TypeSpace)
 			t.Add(nil)
 			l.Buff = append(l.Buff, t)
 		default:
-			l.Buff = append(l.Buff, &Char{
-				data: string(l.Current),
+			l.Buff = append(l.Buff, &tokens.Char{
+				Data: string(l.Current),
 			})
 		}
 	}
 
-	return true
+	return false
 }
