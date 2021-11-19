@@ -21,7 +21,7 @@ func Execute() error {
 				},
 				Resolver: config.ResolverOptions{
 					RawUpstream: "1.1.1.1",
-					Mode:        "f",
+					Mode:        "r",
 				},
 				Filter: config.FilterOptions{
 					TTL:  300,
@@ -30,8 +30,8 @@ func Execute() error {
 				Collector: config.CollectorOptions{
 					Anonymize:  false,
 					Enabled:    true,
-					MaxEntries: 5,
-					Interval:   10,
+					MaxEntries: 100000,
+					Interval:   600,
 				},
 			}
 

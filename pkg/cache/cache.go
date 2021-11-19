@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-void/portal/pkg/labels"
+	"github.com/go-void/portal/pkg/tree"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 )
@@ -19,9 +19,9 @@ var (
 // Cache describes a cache interface to store RRs retrieved
 // from remote DNS servers
 type Cache interface {
-	Lookup(string, uint16, uint16) (Entry, Status, error)
+	Lookup(string, uint16, uint16) (tree.Entry, Status, error)
 
-	LookupQuestion(dns.Question) (Entry, Status, error)
+	LookupQuestion(dns.Question) (tree.Entry, Status, error)
 
 	Set(string, uint16, uint16, rr.RR, uint32) error
 
@@ -31,99 +31,27 @@ type Cache interface {
 // DefaultCache implements the Cache interface and stores
 // RRs in an in-memory tree
 type DefaultCache struct {
-	root Node
+	*tree.Tree
 }
 
 // NewDefaultCache returns a new default in-memory tree cache
 func NewDefaultCache() *DefaultCache {
 	return &DefaultCache{
-		root: Node{
-			parent:   nil,
-			children: make(map[string]Node),
-			entries:  make(map[uint16]Entry),
-		},
+		Tree: tree.New(),
 	}
-}
-
-// Get walks the tree to retrieve a node (INTERNAL)
-func (c *DefaultCache) Get(name string) (Node, error) {
-	nodes, err := c.Walk(name)
-	if err != nil {
-		return Node{}, err
-	}
-	return nodes[len(nodes)-1], nil
-}
-
-// Walk walks the tree until the requested node is found and
-// returns errors encountered along the way (INTERNAL)
-func (c *DefaultCache) Walk(name string) ([]Node, error) {
-	var (
-		current = c.root
-		nodes   = []Node{}
-		names   = labels.FromRoot(name)
-	)
-
-	for _, name := range names {
-		if name == "" || name == "." {
-			nodes = append(nodes, current)
-			continue
-		}
-
-		node, err := current.Child(name)
-		if err != nil {
-			return nodes, ErrNodeNotFound
-		}
-
-		current = node
-		nodes = append(nodes, node)
-	}
-
-	return nodes, nil
-}
-
-// Populate populates the tree along the provided name (INTERNAL).
-// Example: example.com => . -> com -> example
-func (c *DefaultCache) Populate(name string) (Node, error) {
-	var current = c.root
-	var names = labels.FromRoot(name)
-
-	for _, name := range names {
-		if name == "" || name == "." {
-			continue
-		}
-
-		node, err := current.Child(name)
-		if err != nil {
-			node := Node{
-				parent:   &current,
-				children: make(map[string]Node),
-				entries:  make(map[uint16]Entry),
-			}
-
-			err := current.AddChild(name, node)
-			if err != nil {
-				return Node{}, err
-			}
-
-			current = node
-			continue
-		}
-		current = node
-	}
-	return current, nil
 }
 
 // Lookup looks up a entry for name with class and type and returns the status and errors
 // encountered along the way
-func (c *DefaultCache) Lookup(name string, class, t uint16) (Entry, Status, error) {
+func (c *DefaultCache) Lookup(name string, class, t uint16) (tree.Entry, Status, error) {
 	node, err := c.Get(name)
 	if err != nil {
-		return Entry{}, Miss, nil
+		return tree.Entry{}, Miss, nil
 	}
 
 	entry, err := node.Entry(class, t)
 	if err != nil {
-		return Entry{}, Miss, nil
+		return tree.Entry{}, Miss, nil
 	}
 
 	status := Hit
@@ -133,14 +61,14 @@ func (c *DefaultCache) Lookup(name string, class, t uint16) (Entry, Status, erro
 
 	rr.UpdateTTL(entry.Record, entry.Expire)
 
-	return Entry{
+	return tree.Entry{
 		Record: entry.Record,
 		Expire: entry.Expire,
 	}, status, nil
 }
 
 // LookupQuestion is a convenience function to lookup a DNS question
-func (c *DefaultCache) LookupQuestion(message dns.Question) (Entry, Status, error) {
+func (c *DefaultCache) LookupQuestion(message dns.Question) (tree.Entry, Status, error) {
 	return c.Lookup(message.Name, message.Class, message.Type)
 }
 

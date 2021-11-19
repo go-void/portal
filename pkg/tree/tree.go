@@ -24,7 +24,7 @@ func New() *Tree {
 		root: Node{
 			parent:   nil,
 			children: make(map[string]Node),
-			data:     make(map[uint16]Record),
+			entries:  make(map[uint16]Entry),
 		},
 	}
 }
@@ -32,17 +32,39 @@ func New() *Tree {
 // Get retrieves a node via a name. Example: example.com traverses
 // the tree like . -> com -> example
 func (t *Tree) Get(name string) (Node, error) {
-	nodes, err := t.Walk(name)
+	node, err := t.Walk(name)
 	if err != nil {
 		return Node{}, err
 	}
-	return nodes[len(nodes)-1], nil
+	return node, nil
 }
 
-// Walk traverses the tree until the end of labels is reached which
-// returns a list of node or a non-existent node is encountered and
-// an error is returned
-func (t *Tree) Walk(name string) ([]Node, error) {
+// Walk traverses the tree until the end of labels is reached
+func (t *Tree) Walk(name string) (Node, error) {
+	var (
+		current = t.root
+		names   = labels.FromRoot(name)
+	)
+
+	for _, name := range names {
+		if name == "" || name == "." {
+			continue
+		}
+
+		node, err := current.Child(name)
+		if err != nil {
+			return current, ErrNodeNotFound
+		}
+
+		current = node
+	}
+
+	return current, nil
+}
+
+// WalkChain traverses the tree until the end of labels is reached which
+// returns a list of nodes
+func (t *Tree) WalkChain(name string) ([]Node, error) {
 	var (
 		current = t.root
 		nodes   = []Node{}
@@ -83,7 +105,7 @@ func (t *Tree) Populate(name string) (Node, error) {
 			node := Node{
 				parent:   &current,
 				children: make(map[string]Node),
-				data:     make(map[uint16]Record),
+				entries:  make(map[uint16]Entry),
 			}
 
 			err := current.AddChild(name, node)

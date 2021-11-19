@@ -26,7 +26,7 @@ type Store interface {
 
 // DefaultStore implements a default store based on a in-memory tree structure
 type DefaultStore struct {
-	Tree *tree.Tree
+	*tree.Tree
 }
 
 func NewDefault() *DefaultStore {
@@ -42,12 +42,12 @@ func (s *DefaultStore) Get(question dns.Question) (rr.RR, error) {
 		return nil, err
 	}
 
-	nodeRecord, err := node.Record(question.Class, question.Type)
+	nodeRecord, err := node.Entry(question.Class, question.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	return nodeRecord.RR, err
+	return nodeRecord.Record, err
 }
 
 // Set sets type's data of a 'node' selected by name

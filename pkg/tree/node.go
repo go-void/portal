@@ -6,17 +6,15 @@ import (
 	"github.com/go-void/portal/pkg/types/rr"
 )
 
-// Node describes a single node which keeps tracks of it's children,
-// data and parent node
 type Node struct {
 	parent   *Node
 	children map[string]Node
-	data     map[uint16]Record
+	entries  map[uint16]Entry
 }
 
-type Record struct {
+type Entry struct {
+	Record rr.RR
 	Expire time.Time
-	RR     rr.RR
 }
 
 // Parent returns this node's parent node
@@ -24,8 +22,7 @@ func (n *Node) Parent() *Node {
 	return n.parent
 }
 
-// Child returns this node's child identified by 'name" or
-// an error if this child doesn't exist
+// Child returns this node's child identified by 'name" or an error if this child doesn't exist
 func (n *Node) Child(name string) (Node, error) {
 	if node, ok := n.children[name]; ok {
 		return node, nil
@@ -33,8 +30,7 @@ func (n *Node) Child(name string) (Node, error) {
 	return Node{}, ErrNodeNotFound
 }
 
-// AddChild adds a child to this node or returns an error
-// if the child already exists
+// AddChild adds a child to this node or returns an error if the child already exists
 func (n *Node) AddChild(name string, child Node) error {
 	if _, ok := n.children[name]; ok {
 		return ErrChildAlreadyExists
@@ -44,17 +40,17 @@ func (n *Node) AddChild(name string, child Node) error {
 }
 
 // Record returns a stored record with class and type
-func (n *Node) Record(class, t uint16) (Record, error) {
-	if record, ok := n.data[class*100+t]; ok {
+func (n *Node) Entry(class, t uint16) (Entry, error) {
+	if record, ok := n.entries[class*100+t]; ok {
 		return record, nil
 	}
-	return Record{}, ErrNoSuchData
+	return Entry{}, ErrNoSuchData
 }
 
 // SetData sets data for type t
 func (n *Node) SetData(class, t uint16, record rr.RR, expire time.Time) {
-	n.data[class*100+t] = Record{
+	n.entries[class*100+t] = Entry{
 		Expire: expire,
-		RR:     record,
+		Record: record,
 	}
 }

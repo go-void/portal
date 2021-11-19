@@ -16,6 +16,7 @@ import (
 	"github.com/go-void/portal/pkg/pack"
 	"github.com/go-void/portal/pkg/resolver"
 	"github.com/go-void/portal/pkg/store"
+	"github.com/go-void/portal/pkg/tree"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 
@@ -197,7 +198,10 @@ func (s *Server) Configure(c *config.Config) {
 		switch c.Resolver.Mode {
 		case "r":
 			// TODO (Techassi): Adjust API, provide path to hints file instead of the hints itself
-			s.Resolver = resolver.NewRecursiveResolver([]net.IP{}, s.Cache)
+			s.Resolver = resolver.NewRecursiveResolver([]net.IP{
+				net.ParseIP("198.41.0.4"),
+				net.ParseIP("199.9.14.201"),
+			}, s.Cache)
 		case "i":
 			s.Resolver = resolver.NewIterativeResolver()
 		case "f":
@@ -262,7 +266,7 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 
 	// TODO (Techassi): Clean this up. Is there a more elegant solution?
 	var status cache.Status
-	var entry cache.Entry
+	var entry tree.Entry
 	var record rr.RR
 
 	if s.usesCache {
