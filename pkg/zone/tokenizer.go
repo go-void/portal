@@ -69,6 +69,8 @@ func (t *Tokenizer) read() bool {
 	return true
 }
 
+// TODO (Techassi): Handle comments after a record
+
 func (t *Tokenizer) next() bool {
 	if t.Error != nil {
 		return false
@@ -79,9 +81,11 @@ func (t *Tokenizer) next() bool {
 		case ';':
 			if t.Quoted || t.Escaped {
 				t.Escaped = false
-				t.Buff = append(t.Buff, NewToken(CommentToken))
+				t.Buff = append(t.Buff, NewCharToken(t.Current))
 				continue
 			}
+
+			t.Buff = append(t.Buff, NewToken(CommentToken))
 			t.InComment = true
 		case '\n', '\r':
 			if t.Brackets > 0 {
@@ -109,11 +113,22 @@ func (t *Tokenizer) next() bool {
 			t.Buff = []Token{}
 		case '"':
 			if t.Quoted && !t.Escaped {
+				t.Buff = append(t.Buff, NewToken(QuoteToken))
 				t.Quoted = false
+				continue
 			}
+
+			if t.Escaped {
+				t.Buff = append(t.Buff, NewCharToken(t.Current))
+				continue
+			}
+
+			t.Buff = append(t.Buff, NewToken(QuoteToken))
+			t.Quoted = true
 		case '(', ')':
-			if t.Escaped || t.Quoted {
+			if t.Escaped || t.Quoted || t.InComment {
 				t.Escaped = false
+				continue
 			}
 
 			if t.Current == '(' {

@@ -8,11 +8,12 @@ const (
 	CommentToken
 	RecordToken
 	SpaceToken
+	QuoteToken
 	CharToken
 )
 
 func (t TokenType) String() string {
-	return []string{")", "(", ";", "", " ", ""}[t]
+	return []string{")", "(", ";", "", " ", "\"", ""}[t]
 }
 
 type Token struct {
@@ -40,7 +41,7 @@ func (t *Token) AddTokens(tokens []Token) {
 
 func (t *Token) String() string {
 	switch t.Type {
-	case BracketCloseToken, BracketOpenToken, CommentToken, SpaceToken:
+	case BracketCloseToken, BracketOpenToken, CommentToken, SpaceToken, QuoteToken:
 		return t.Type.String()
 	case RecordToken:
 		s := ""

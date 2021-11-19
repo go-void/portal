@@ -12,7 +12,7 @@ block) DNS queries.
 
 -   IN-ADDR.ARPA domain [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-3.5)
 -   Message compression [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.4)
--   Master Files (Lexing + Parsing) [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-5)
+-   Finalize Master Files Parsing [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-5)
 -   Implement RPZs [DRAFT Vixie DNS RPZ](https://datatracker.ietf.org/doc/html/draft-vixie-dns-rpz-00)
 
 ## RFS to implement
