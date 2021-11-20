@@ -41,14 +41,14 @@ func (n *Node) AddChild(name string, child Node) error {
 
 // Record returns a stored record with class and type
 func (n *Node) Entry(class, t uint16) (Entry, error) {
-	if record, ok := n.entries[class*100+t]; ok {
-		return record, nil
+	if entry, ok := n.entries[class*100+t]; ok {
+		return entry, nil
 	}
 	return Entry{}, ErrNoSuchData
 }
 
-// SetData sets data for type t
-func (n *Node) SetData(class, t uint16, record rr.RR, expire time.Time) {
+// SetEntry sets data for type t
+func (n *Node) SetEntry(class, t uint16, record rr.RR, expire time.Time) {
 	n.entries[class*100+t] = Entry{
 		Expire: expire,
 		Record: record,

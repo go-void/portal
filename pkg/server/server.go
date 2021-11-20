@@ -265,7 +265,7 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 
 	// TODO (Techassi): Also check if we have any custom records
 	if status != cache.Hit || !s.cacheEnabled {
-		record, err = s.Store.Get(message.Question[0])
+		record, err = s.Store.GetQuestion(message.Question[0])
 	}
 
 	if err != nil {

@@ -80,7 +80,7 @@ func (c *DefaultCache) Set(name string, class, t uint16, record rr.RR, ttl uint3
 	}
 
 	expire := time.Now().Add(time.Duration(ttl) * time.Second)
-	node.SetData(class, t, record, expire)
+	node.SetEntry(class, t, record, expire)
 
 	return nil
 }
@@ -94,7 +94,7 @@ func (c *DefaultCache) SetMultiple(name string, class, t uint16, records []rr.RR
 
 	expire := time.Now().Add(time.Duration(ttl) * time.Second)
 	for _, record := range records {
-		node.SetData(class, t, record, expire)
+		node.SetEntry(class, t, record, expire)
 	}
 
 	return nil
