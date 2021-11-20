@@ -1,5 +1,4 @@
-// Package store provides a domain space data store to retrieve
-// and store such data
+// Package store provides an interface to store and retrieve custom DNS records
 package store
 
 import (
