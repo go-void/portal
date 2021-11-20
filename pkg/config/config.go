@@ -24,18 +24,20 @@ type Config struct {
 }
 
 type ServerOptions struct {
-	RawAddress string `toml:"address"`
-	Address    net.IP `toml:"-"`
-	Network    string `toml:"network"`
-	Port       int    `toml:"port"`
+	CacheEnabled bool   `toml:"cache_enabled"`
+	RawAddress   string `toml:"address"`
+	Address      net.IP `toml:"-"`
+	Network      string `toml:"network"`
+	Port         int    `toml:"port"`
 }
 
 type ResolverOptions struct {
-	RawUpstream string `toml:"upstream"`
-	Upstream    net.IP `toml:"-"`
-	Mode        string `toml:"mode"`
-	HintPath    string `toml:"hint_path"`
-	MaxExpire   int    `toml:"max_expire"`
+	CacheEnabled bool   `toml:"cache_enabled"`
+	RawUpstream  string `toml:"upstream"`
+	Upstream     net.IP `toml:"-"`
+	Mode         string `toml:"mode"`
+	HintPath     string `toml:"hint_path"`
+	MaxExpire    int    `toml:"max_expire"`
 }
 
 type FilterOptions struct {

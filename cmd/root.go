@@ -15,13 +15,14 @@ func Execute() error {
 		Action: func(c *cli.Context) error {
 			cfg := &config.Config{
 				Server: config.ServerOptions{
-					RawAddress: "127.0.0.1",
-					Network:    "udp",
-					Port:       8553,
+					CacheEnabled: true,
+					RawAddress:   "127.0.0.1",
+					Network:      "udp",
+					Port:         8553,
 				},
 				Resolver: config.ResolverOptions{
-					RawUpstream: "1.1.1.1",
-					Mode:        "r",
+					CacheEnabled: true,
+					Mode:         "r",
 				},
 				Filter: config.FilterOptions{
 					TTL:  300,

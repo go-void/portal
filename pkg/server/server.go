@@ -120,7 +120,7 @@ type Server struct {
 	running bool
 
 	// This indicates if the server / store is using a cache
-	usesCache bool
+	cacheEnabled bool
 }
 
 // New creates a new DNS server instance
@@ -176,6 +176,7 @@ func (s *Server) Configure(c *config.Config) {
 		s.AncillarySize = len(ancillary6)
 	}
 
+	s.cacheEnabled = c.Server.CacheEnabled
 	s.Address = c.Server.Address
 	s.Network = c.Server.Network
 	s.Port = c.Server.Port
@@ -191,22 +192,10 @@ func (s *Server) Configure(c *config.Config) {
 
 	if s.Cache == nil {
 		s.Cache = cache.NewDefaultCache()
-		s.usesCache = true
 	}
 
 	if s.Resolver == nil {
-		switch c.Resolver.Mode {
-		case "r":
-			// TODO (Techassi): Adjust API, provide path to hints file instead of the hints itself
-			s.Resolver = resolver.NewRecursiveResolver([]net.IP{
-				net.ParseIP("198.41.0.4"),
-				net.ParseIP("199.9.14.201"),
-			}, s.Cache)
-		case "i":
-			s.Resolver = resolver.NewIterativeResolver()
-		case "f":
-			s.Resolver = resolver.NewForwardingResolver(c.Resolver.Upstream, s.Cache)
-		}
+		s.Resolver = resolver.New(c.Resolver, s.Cache)
 	}
 
 	if s.Collector == nil {
@@ -269,12 +258,13 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 	var entry tree.Entry
 	var record rr.RR
 
-	if s.usesCache {
+	if s.cacheEnabled {
 		entry, status, err = s.Cache.LookupQuestion(message.Question[0])
 		record = entry.Record
 	}
 
-	if status != cache.Hit || !s.usesCache {
+	// TODO (Techassi): Also check if we have any custom records
+	if status != cache.Hit || !s.cacheEnabled {
 		record, err = s.Store.Get(message.Question[0])
 	}
 

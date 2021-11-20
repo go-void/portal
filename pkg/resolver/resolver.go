@@ -3,6 +3,8 @@ package resolver
 import (
 	"errors"
 
+	"github.com/go-void/portal/pkg/cache"
+	"github.com/go-void/portal/pkg/config"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 )
@@ -39,4 +41,16 @@ type Resolver interface {
 type ResolveChain struct {
 	QueryName string
 	// Links []Link
+}
+
+func New(cfg config.ResolverOptions, c cache.Cache) Resolver {
+	switch cfg.Mode {
+	case "r":
+		return NewRecursiveResolver(cfg, c)
+	case "i":
+		return NewIterativeResolver()
+	case "f":
+		return NewForwardingResolver(cfg.Upstream, c)
+	}
+	return nil
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-void/portal/pkg/cache"
 	"github.com/go-void/portal/pkg/client"
+	"github.com/go-void/portal/pkg/config"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 )
@@ -29,34 +30,32 @@ type RecursiveResolver struct {
 	// Access to the cache instance
 	Cache cache.Cache
 
-	lock sync.RWMutex
+	cacheEnabled bool
+	lock         sync.RWMutex
 }
 
 // NewRecursiveResolver returns a new recursive resolver
-func NewRecursiveResolver(hints []net.IP, c cache.Cache) *RecursiveResolver {
+func NewRecursiveResolver(cfg config.ResolverOptions, c cache.Cache) *RecursiveResolver {
+	// TODO (Techassi): Read in hints
+	hints := []net.IP{
+		net.ParseIP("198.41.0.4"),
+		net.ParseIP("199.9.14.201"),
+	}
+
 	return &RecursiveResolver{
-		Client: client.NewDefault(),
-		Hints:  hints,
-		Cache:  c,
+		Client:       client.NewDefault(),
+		Hints:        hints,
+		Cache:        c,
+		cacheEnabled: cfg.CacheEnabled,
 	}
 }
 
 // Resolve resolves a query by recursivly resolving it
 func (r *RecursiveResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
-	entry, status, err := r.Cache.Lookup(name, class, t)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	if status == cache.Hit {
-		return entry.Record, nil
-	}
-
-	if status == cache.Expired {
-		max := entry.Expire.Add(time.Duration(r.MaxExpired) * time.Second)
-		if max.After(time.Now()) {
-			go r.Refresh(name, class, t)
-			return entry.Record, nil
+	if r.cacheEnabled {
+		record, ok := r.LookupInCache(name, class, t)
+		if ok {
+			return record, nil
 		}
 	}
 
@@ -65,9 +64,11 @@ func (r *RecursiveResolver) Resolve(name string, class, t uint16) (rr.RR, error)
 		return nil, err
 	}
 
-	err = r.Cache.Set(name, class, t, response, response.Header().TTL)
-	if err != nil {
-		fmt.Println(err)
+	if r.cacheEnabled {
+		err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	return response, nil
@@ -82,7 +83,9 @@ func (r *RecursiveResolver) Lookup(name string, class, t uint16) (rr.RR, error) 
 	var glueFound bool
 	var ip = r.Hint()
 
+	// TODO (Techassi): Use cache
 	for {
+		// TODO (Techassi): Can we split this up into multiple parts?
 		response, err := r.Client.Query(name, class, t, ip)
 		if err != nil {
 			return nil, err
@@ -122,6 +125,15 @@ func (r *RecursiveResolver) Lookup(name string, class, t uint16) (rr.RR, error) 
 							ip = glue.Address
 						}
 
+						// Cache NS records
+						if r.cacheEnabled {
+							err := r.Cache.Set(ns.NSDName, class, t, ar, ar.Header().TTL)
+							if err != nil {
+								// TODO (Techassi): Handle error
+								fmt.Println(err)
+							}
+						}
+
 						glueFound = true
 						break
 					}
@@ -151,8 +163,39 @@ func (r *RecursiveResolver) Lookup(name string, class, t uint16) (rr.RR, error) 
 	}
 }
 
+func (r *RecursiveResolver) LookupInCache(name string, class, t uint16) (rr.RR, bool) {
+	entry, status, err := r.Cache.Lookup(name, class, t)
+	if err != nil {
+		fmt.Println(err)
+		return nil, false
+	}
+
+	if status == cache.Hit {
+		return entry.Record, true
+	}
+
+	if status == cache.Expired {
+		max := entry.Expire.Add(time.Duration(r.MaxExpired) * time.Second)
+		if max.After(time.Now()) {
+			go r.Refresh(name, class, t)
+			return entry.Record, true
+		}
+	}
+
+	return nil, false
+}
+
 func (r *RecursiveResolver) Refresh(name string, class, t uint16) {
-	return
+	response, err := r.Lookup(name, class, t)
+	if err != nil {
+		// NOTE (Techassi): Log this
+		return
+	}
+
+	err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+	if err != nil {
+		// NOTE (Techassi): Log this
+	}
 }
 
 // Hint returns a root hint
