@@ -11,6 +11,7 @@ package rr
 import (
 	"errors"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -94,6 +95,17 @@ func New(t uint16) (RR, error) {
 	}
 
 	return rr(), nil
+}
+
+// NewFromName returns a new RR based on the provided name
+func NewFromName(name string) (RR, uint16, error) {
+	t := stringToTypeMap[strings.ToUpper(name)]
+	rr, err := New(t)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return rr, t, nil
 }
 
 // UpdateTTL updates the TTL of a record based on the expiry timestamp

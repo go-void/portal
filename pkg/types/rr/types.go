@@ -1,9 +1,5 @@
 package rr
 
-// Type describes RR type codes.
-// See https://datatracker.ietf.org/doc/html/rfc1035#section-3.2.2
-type Type uint16
-
 const (
 	TypeNone  uint16 = 0
 	TypeA     uint16 = 1  // A host address
@@ -32,3 +28,55 @@ const (
 	TypeMAILA uint16 = 254 // A request for mail agent RRs (Obsolete - see MX)
 	TypeANY   uint16 = 255 // A request for all records (*)
 )
+
+var typeToStringMap = map[uint16]string{
+	TypeNone:  "NONE",
+	TypeA:     "A",
+	TypeNS:    "NS",
+	TypeMD:    "MD",
+	TypeMF:    "MF",
+	TypeCNAME: "CNAME",
+	TypeSOA:   "SOA",
+	TypeMB:    "MB",
+	TypeMG:    "MG",
+	TypeMR:    "MR",
+	TypeNULL:  "NULL",
+	TypePTR:   "PTR",
+	TypeHINFO: "HINFO",
+	TypeMINFO: "MINFO",
+	TypeMX:    "MX",
+	TypeTXT:   "TXT",
+	TypeAAAA:  "AAAA",
+	TypeAXFR:  "AXFR",
+	TypeMAILB: "MAILB",
+	TypeMAILA: "MAILA",
+	TypeANY:   "ANY",
+}
+
+var stringToTypeMap = map[string]uint16{
+	"NONE":  TypeNone,
+	"A":     TypeA,
+	"NS":    TypeNS,
+	"MD":    TypeMD,
+	"MF":    TypeMF,
+	"CNAME": TypeCNAME,
+	"SOA":   TypeSOA,
+	"MB":    TypeMB,
+	"MG":    TypeMG,
+	"MR":    TypeMR,
+	"NULL":  TypeNULL,
+	"PTR":   TypePTR,
+	"HINFO": TypeHINFO,
+	"MINFO": TypeMINFO,
+	"MX":    TypeMX,
+	"TXT":   TypeTXT,
+	"AAAA":  TypeAAAA,
+	"AXFR":  TypeAXFR,
+	"MAILB": TypeMAILB,
+	"MAILA": TypeMAILA,
+	"ANY":   TypeANY,
+}
+
+func TypeToString(t uint16) string {
+	return typeToStringMap[t]
+}
