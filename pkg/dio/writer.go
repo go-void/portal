@@ -1,4 +1,4 @@
-package dnsio
+package dio
 
 import (
 	"encoding/binary"

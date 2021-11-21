@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-void/portal/pkg/constants"
-	"github.com/go-void/portal/pkg/dnsio"
+	"github.com/go-void/portal/pkg/dio"
 	"github.com/go-void/portal/pkg/pack"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/opcode"
@@ -66,11 +66,11 @@ type DefaultClient struct {
 
 	// Reader implements the Reader interface to read
 	// incoming TCP and UDP messages
-	Reader dnsio.Reader
+	Reader dio.Reader
 
 	// Writer implements the Writer interface to write
 	// outgoing TCP and UDP messages
-	Writer dnsio.Writer
+	Writer dio.Writer
 
 	DialTimeout  time.Duration
 	WriteTimeout time.Duration
@@ -101,8 +101,8 @@ func NewDefault() *DefaultClient {
 		Network:      "udp",
 		Unpacker:     pack.NewDefaultUnpacker(),
 		Packer:       pack.NewDefaultPacker(),
-		Reader:       dnsio.NewDefaultReader(size),
-		Writer:       dnsio.NewDefaultWriter(),
+		Reader:       dio.NewDefaultReader(size),
+		Writer:       dio.NewDefaultWriter(),
 		DialTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
 		ReadTimeout:  2 * time.Second,

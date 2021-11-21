@@ -11,7 +11,7 @@ import (
 	"github.com/go-void/portal/pkg/collector"
 	"github.com/go-void/portal/pkg/config"
 	"github.com/go-void/portal/pkg/constants"
-	"github.com/go-void/portal/pkg/dnsio"
+	"github.com/go-void/portal/pkg/dio"
 	"github.com/go-void/portal/pkg/filter"
 	"github.com/go-void/portal/pkg/pack"
 	"github.com/go-void/portal/pkg/resolver"
@@ -52,11 +52,11 @@ type Server struct {
 
 	// Reader implements the Reader interface to read
 	// incoming TCP and UDP messages
-	Reader dnsio.Reader
+	Reader dio.Reader
 
 	// Writer implements the Writer interface to write
 	// outgoing TCP and UDP messages
-	Writer dnsio.Writer
+	Writer dio.Writer
 
 	// Unpacker implements the Unpacker interface to unwrap
 	// DNS messages
@@ -211,11 +211,11 @@ func (s *Server) Configure(c *config.Config) {
 	}
 
 	if s.Reader == nil {
-		s.Reader = dnsio.NewDefaultReader(s.AncillarySize)
+		s.Reader = dio.NewDefaultReader(s.AncillarySize)
 	}
 
 	if s.Writer == nil {
-		s.Writer = dnsio.NewDefaultWriter()
+		s.Writer = dio.NewDefaultWriter()
 	}
 
 	if s.AcceptFunc == nil {
