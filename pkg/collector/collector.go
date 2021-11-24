@@ -75,7 +75,7 @@ func (c *DefaultCollector) FlushEntries() error {
 		return nil
 	}
 
-	err := c.Store.CreateEntries(c.entries)
+	err := c.Store.StoreEntries(c.entries)
 	if err != nil {
 		return err
 	}

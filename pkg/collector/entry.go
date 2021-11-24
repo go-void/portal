@@ -9,10 +9,10 @@ import (
 )
 
 type Entry struct {
-	QueryTime time.Duration
+	ID        string
 	Question  dns.Question
 	Answer    rr.RR
-	Result    string
+	QueryTime time.Duration
 	ClientIP  net.IP
 	Filtered  bool
 	Cached    bool
@@ -20,10 +20,10 @@ type Entry struct {
 
 func NewEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
 	return Entry{
+		ID:        "",
 		QueryTime: queryTime,
 		Question:  question,
 		Answer:    answer,
-		Result:    "",
 		ClientIP:  ip,
 		Filtered:  false,
 		Cached:    false,
