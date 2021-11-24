@@ -25,12 +25,12 @@ type Config struct {
 	Server    ServerOptions    `toml:"server"`
 }
 
-type ServerOptions struct {
-	CacheEnabled bool   `toml:"cache_enabled"`
-	RawAddress   string `toml:"address"`
-	Address      net.IP `toml:"-"`
-	Network      string `toml:"network"`
-	Port         int    `toml:"port"`
+type CollectorOptions struct {
+	MaxEntries int    `toml:"max_entries"`
+	Anonymize  bool   `toml:"anonymize"`
+	Interval   uint   `toml:"interval"`
+	Enabled    bool   `toml:"enabled"`
+	Backend    string `toml:"backend"`
 }
 
 type ResolverOptions struct {
@@ -47,12 +47,12 @@ type FilterOptions struct {
 	Mode string `toml:"mode"`
 }
 
-type CollectorOptions struct {
-	MaxEntries int    `toml:"max_entries"`
-	Anonymize  bool   `toml:"anonymize"`
-	Interval   uint   `toml:"interval"`
-	Enabled    bool   `toml:"enabled"`
-	Backend    string `toml:"backend"`
+type ServerOptions struct {
+	CacheEnabled bool   `toml:"cache_enabled"`
+	RawAddress   string `toml:"address"`
+	Address      net.IP `toml:"-"`
+	Network      string `toml:"network"`
+	Port         int    `toml:"port"`
 }
 
 // Default returns a config with default values

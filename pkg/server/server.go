@@ -31,6 +31,8 @@ var (
 	ErrNoQuestions          = errors.New("no questions")
 )
 
+// TODO (Techassi): Add shutdown method with context
+
 // Server describes options for running a DNS server
 type Server struct {
 	// The address the server is running on (default: 0.0.0.0)
@@ -114,7 +116,8 @@ type Server struct {
 	// reading server data
 	lock sync.RWMutex
 
-	wg sync.WaitGroup
+	conns sync.WaitGroup
+	wg    sync.WaitGroup
 
 	// This indicates if the server instance is running
 	running bool
@@ -128,6 +131,7 @@ func New() *Server {
 	server := &Server{
 		UDPMessageSize: constants.UDPMinMessageSize,
 		messageList:    sync.Pool{},
+		conns:          sync.WaitGroup{},
 		wg:             sync.WaitGroup{},
 	}
 	server.messageList.New = createByteBuffer(constants.UDPMinMessageSize)
@@ -135,14 +139,15 @@ func New() *Server {
 	return server
 }
 
-// ListenAndServe starts the listen / respond loop of DNS messages
-func (s *Server) ListenAndServe() error {
+// Run starts the listen / respond loop of DNS messages
+func (s *Server) Run() error {
 	if s.isRunning() {
 		return ErrServerAlreadyRunning
 	}
 
 	s.Collector.Run()
 	s.running = true
+	s.wg.Add(1)
 
 	switch s.Network {
 	case "udp", "udp4", "udp6":
@@ -151,14 +156,16 @@ func (s *Server) ListenAndServe() error {
 			return err
 		}
 		s.UDPListener = listener
-		return s.serveUDP()
+		go s.serveUDP()
+		return nil
 	case "tcp", "tcp4", "tcp6":
 		listener, err := createTCPListener(s.Network, s.Address, s.Port)
 		if err != nil {
 			return err
 		}
 		s.TCPListener = listener
-		return s.serveTCP()
+		go s.serveTCP()
+		return nil
 	}
 
 	return ErrNoSuchNetwork
@@ -232,7 +239,7 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 	start := time.Now()
 
 	if len(message.Question) == 0 {
-		s.wg.Done()
+		s.conns.Done()
 		return message, ErrNoQuestions
 	}
 
@@ -291,4 +298,12 @@ func (s *Server) isRunning() bool {
 	running := s.running
 	s.lock.RUnlock()
 	return running
+}
+
+func (s *Server) Shutdown() {
+	s.wg.Done()
+}
+
+func (s *Server) Wait() {
+	s.wg.Wait()
 }

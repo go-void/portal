@@ -33,6 +33,7 @@ func Execute() error {
 					Enabled:    true,
 					MaxEntries: 100000,
 					Interval:   600,
+					Backend:    "default",
 				},
 			}
 
@@ -44,7 +45,13 @@ func Execute() error {
 			s := server.New()
 			s.Configure(cfg)
 
-			return s.ListenAndServe()
+			err = s.Run()
+			if err != nil {
+				return err
+			}
+
+			s.Wait()
+			return nil
 		},
 	}
 

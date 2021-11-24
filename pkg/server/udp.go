@@ -7,32 +7,30 @@ import (
 )
 
 // serveUDP is the main listen / answer loop, which handles DNS queries and responses via UDP
-func (s *Server) serveUDP() error {
+func (s *Server) serveUDP() {
 	// FIXME (Techassi): Handle shutdown with shutdown context and signals
 	for s.isRunning() {
 		b, session, err := s.readUDP()
 		if err != nil {
-			return err
+			fmt.Println(err)
 		}
 
 		header, offset, err := s.Unpacker.UnpackHeader(b)
 		if err != nil {
-			return err
+			fmt.Println(err)
 		}
 
 		switch s.AcceptFunc(header) {
 		case AcceptMessage:
 			m, err := s.Unpacker.Unpack(header, b, offset)
 			if err != nil {
-				return err
+				fmt.Println(err)
 			}
 
-			s.wg.Add(1)
+			s.conns.Add(1)
 			go s.handleUDP(m, session)
 		}
 	}
-
-	return nil
 }
 
 // handleUDP handles name matching and returns a response message via UDP
@@ -59,7 +57,7 @@ func (s *Server) readUDP() ([]byte, dns.Session, error) {
 
 // writeUDP packs a DNS message and writes it back to the requesting DNS client via UDP
 func (s *Server) writeUDP(message dns.Message, session dns.Session) {
-	defer s.wg.Done()
+	defer s.conns.Done()
 
 	b, err := s.Packer.Pack(message)
 	if err != nil {
