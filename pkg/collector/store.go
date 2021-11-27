@@ -1,7 +1,7 @@
 package collector
 
-// CollectorStore defines an interface to flush in-memory entries to persist via a backend
-type CollectorStore interface {
+// Store defines an interface to flush in-memory entries to persist via a backend
+type Store interface {
 	// StoreEntries stores a slice of entries
 	StoreEntries([]Entry) error
 
@@ -9,18 +9,18 @@ type CollectorStore interface {
 	Prepare() error
 }
 
-// DefaultCollectorStore discards flushed entries
-type DefaultCollectorStore struct {
+// DefaultStore discards flushed entries
+type DefaultStore struct {
 }
 
-func NewDefaultStore() *DefaultCollectorStore {
-	return &DefaultCollectorStore{}
+func NewStore() *DefaultStore {
+	return &DefaultStore{}
 }
 
-func (s *DefaultCollectorStore) StoreEntries(_ []Entry) error {
+func (s *DefaultStore) StoreEntries(_ []Entry) error {
 	return nil
 }
 
-func (s *DefaultCollectorStore) Prepare() error {
+func (s *DefaultStore) Prepare() error {
 	return nil
 }

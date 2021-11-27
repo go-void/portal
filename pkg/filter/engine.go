@@ -1,12 +1,23 @@
 // Package filter provides different functions to filter out DNS requests (to block them)
 package filter
 
-import "net"
+import (
+	"errors"
+	"net"
+
+	"github.com/go-void/portal/pkg/types/dns"
+)
+
+var (
+	ErrNoSuchFilter = errors.New("filter: no such filter")
+)
 
 type Engine interface {
 	AddFilter(Filter) error
 
 	GetFilter(*net.IP) (*Filter, error)
+
+	Match(net.IP, dns.Message) (bool, dns.Message, error)
 }
 
 type DefaultEngine struct {
@@ -24,5 +35,14 @@ func (e *DefaultEngine) AddFilter(f Filter) error {
 }
 
 func (e *DefaultEngine) GetFilter(*net.IP) (*Filter, error) {
-	return nil, nil
+	return nil, ErrNoSuchFilter
+}
+
+func (e *DefaultEngine) Match(ip net.IP, message dns.Message) (bool, dns.Message, error) {
+	filter, err := e.GetFilter(&ip)
+	if err != nil {
+		return false, message, nil
+	}
+
+	return filter.Match(message)
 }

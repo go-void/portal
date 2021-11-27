@@ -42,9 +42,7 @@ func Execute() error {
 				return err
 			}
 
-			s := server.New()
-			s.Configure(cfg)
-
+			s := server.New(cfg)
 			err = s.Run()
 			if err != nil {
 				return err

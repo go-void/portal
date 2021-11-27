@@ -31,6 +31,8 @@ var (
 	ErrNoQuestions          = errors.New("no questions")
 )
 
+type OptionsFunc func(*Server) error
+
 // TODO (Techassi): Add shutdown method with context
 
 // Server describes options for running a DNS server
@@ -90,6 +92,8 @@ type Server struct {
 	// the cache
 	Resolver resolver.Resolver
 
+	// Collector implements the Collector interface to collect
+	// query logs
 	Collector collector.Collector
 
 	// UDPMessageSize is the default message size to create
@@ -124,17 +128,33 @@ type Server struct {
 
 	// This indicates if the server / store is using a cache
 	cacheEnabled bool
+
+	config *config.Config
 }
 
 // New creates a new DNS server instance
-func New() *Server {
+func New(cfg *config.Config) *Server {
 	server := &Server{
 		UDPMessageSize: constants.UDPMinMessageSize,
-		messageList:    sync.Pool{},
+		Address:        cfg.Server.Address,
+		Network:        cfg.Server.Network,
+		Port:           cfg.Server.Port,
+		cacheEnabled:   cfg.Server.CacheEnabled,
 		conns:          sync.WaitGroup{},
 		wg:             sync.WaitGroup{},
+		messageList:    sync.Pool{},
+		config:         cfg,
 	}
 	server.messageList.New = createByteBuffer(constants.UDPMinMessageSize)
+
+	ancillary4 := ipv4.NewControlMessage(ipv4.FlagDst | ipv4.FlagInterface)
+	ancillary6 := ipv6.NewControlMessage(ipv6.FlagDst | ipv6.FlagInterface)
+
+	if len(ancillary4) > len(ancillary6) {
+		server.AncillarySize = len(ancillary4)
+	} else {
+		server.AncillarySize = len(ancillary6)
+	}
 
 	return server
 }
@@ -144,6 +164,9 @@ func (s *Server) Run() error {
 	if s.isRunning() {
 		return ErrServerAlreadyRunning
 	}
+
+	// Setup defaults
+	s.Defaults()
 
 	s.Collector.Run()
 	s.running = true
@@ -171,29 +194,21 @@ func (s *Server) Run() error {
 	return ErrNoSuchNetwork
 }
 
-// Configure initializes default server parameters and checks if all neccesary components are registered. If not it
-// falls back to defaults. This functions expects a validated config.Config
-func (s *Server) Configure(c *config.Config) {
-	ancillary4 := ipv4.NewControlMessage(ipv4.FlagDst | ipv4.FlagInterface)
-	ancillary6 := ipv6.NewControlMessage(ipv6.FlagDst | ipv6.FlagInterface)
-
-	if len(ancillary4) > len(ancillary6) {
-		s.AncillarySize = len(ancillary4)
-	} else {
-		s.AncillarySize = len(ancillary6)
-	}
-
-	s.cacheEnabled = c.Server.CacheEnabled
-	s.Address = c.Server.Address
-	s.Network = c.Server.Network
-	s.Port = c.Server.Port
-
-	if s.Filter == nil {
-		mode, err := filter.MethodFromString(c.Filter.Mode)
+// Configure configures custom server components
+func (s *Server) Configure(opts ...OptionsFunc) error {
+	for _, opt := range opts {
+		err := opt(s)
 		if err != nil {
-			mode = filter.NullMode
+			return err
 		}
+	}
+	return nil
+}
 
+// Defaults initializes default server parameters and checks if all neccesary components are registered. If not it
+// falls back to defaults. This functions expects a validated config.Config
+func (s *Server) Defaults() {
+	if s.Filter == nil {
 		s.Filter = filter.NewEngine()
 	}
 
@@ -202,11 +217,11 @@ func (s *Server) Configure(c *config.Config) {
 	}
 
 	if s.Resolver == nil {
-		s.Resolver = resolver.New(c.Resolver, s.Cache)
+		s.Resolver = resolver.New(s.config.Resolver, s.Cache)
 	}
 
 	if s.Collector == nil {
-		s.Collector = collector.NewDefault(c.Collector)
+		s.Collector = collector.NewCollector(s.config.Collector)
 	}
 
 	if s.Unpacker == nil {
@@ -246,7 +261,7 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 	// TODO (Techassi): Add support for ANY queries, see RFC 8482
 	var err error
 
-	filtered, message, err := s.Filter.Match(message)
+	filtered, message, err := s.Filter.Match(ip, message)
 	if err != nil {
 		// FIXME (Techassi): How whould we handle a filter error? Should we abort or continue (and answer the query)
 		return message, err

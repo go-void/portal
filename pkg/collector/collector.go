@@ -31,7 +31,7 @@ type Collector interface {
 }
 
 type DefaultCollector struct {
-	Store CollectorStore
+	Store Store
 
 	Interval   time.Duration
 	LastFlush  time.Time
@@ -43,11 +43,11 @@ type DefaultCollector struct {
 	lock    sync.Mutex
 }
 
-func NewDefault(opt config.CollectorOptions) *DefaultCollector {
+func NewCollector(opt config.CollectorOptions) *DefaultCollector {
 	interval := time.Duration(opt.Interval) * time.Second
 
 	return &DefaultCollector{
-		Store:      NewDefaultStore(),
+		Store:      NewStore(),
 		Interval:   interval,
 		MaxEntries: opt.MaxEntries,
 		Anonymize:  opt.Anonymize,
