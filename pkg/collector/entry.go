@@ -9,24 +9,26 @@ import (
 )
 
 type Entry struct {
-	ID        string
-	Question  dns.Question
-	Answer    rr.RR
-	QueryTime time.Duration
-	ClientIP  net.IP
-	Filtered  bool
-	Cached    bool
+	ID            string
+	Question      dns.Question
+	Answer        rr.RR
+	QueryTime     time.Duration
+	ClientIP      net.IP
+	AppliedFilter string
+	Filtered      bool
+	Cached        bool
 }
 
 func NewEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
 	return Entry{
-		ID:        "",
-		QueryTime: queryTime,
-		Question:  question,
-		Answer:    answer,
-		ClientIP:  ip,
-		Filtered:  false,
-		Cached:    false,
+		ID:            "",
+		QueryTime:     queryTime,
+		Question:      question,
+		Answer:        answer,
+		ClientIP:      ip,
+		AppliedFilter: "",
+		Filtered:      false,
+		Cached:        false,
 	}
 }
 

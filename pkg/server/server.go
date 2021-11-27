@@ -70,19 +70,19 @@ type Server struct {
 
 	// Filter implements the Filter interface to enable DNS
 	// filtering
-	Filter filter.Filter
+	Filter filter.Engine
 
 	// Cache implements the Cache interface to store record
 	// data in memory for a specified TTL
 	Cache cache.Cache
 
-	// Store implements the Store interface to get and set
+	// RecordStore implements the RecordStore interface to get and set
 	// record data. A store can be anything, e.g. a file or
 	// a database. The store has access to a cache instance
 	// which stores record data in memory. The default store
 	// does not use the cache as it is implemented as a
 	// in-memory tree structure
-	Store store.Store
+	RecordStore store.Store
 
 	// Resolver implements the Resolver interface to resolve
 	// unknown domain names either iteratively or recursively.
@@ -194,7 +194,7 @@ func (s *Server) Configure(c *config.Config) {
 			mode = filter.NullMode
 		}
 
-		s.Filter = filter.New(mode)
+		s.Filter = filter.NewEngine()
 	}
 
 	if s.Cache == nil {
@@ -229,8 +229,8 @@ func (s *Server) Configure(c *config.Config) {
 		s.AcceptFunc = DefaultAcceptFunc
 	}
 
-	if s.Store == nil {
-		s.Store = store.NewDefault()
+	if s.RecordStore == nil {
+		s.RecordStore = store.NewDefault()
 	}
 }
 
@@ -272,7 +272,7 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 
 	// TODO (Techassi): Also check if we have any custom records
 	if status != cache.Hit || !s.cacheEnabled {
-		record, err = s.Store.GetQuestion(message.Question[0])
+		record, err = s.RecordStore.GetFromQuestion(message.Question[0])
 	}
 
 	if err != nil {

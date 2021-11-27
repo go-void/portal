@@ -1,4 +1,3 @@
-// Package filter provides different filters to filter out DNS requests (to block them)
 package filter
 
 import (
@@ -28,28 +27,7 @@ const (
 	RPZRule
 )
 
-type Filter interface {
-	Match(dns.Message) (bool, dns.Message, error)
-
-	ParseRule(RuleType, string) (string, net.IP, error)
-
-	AddRule(RuleType, string) error
-
-	RemoveRule(string) error
-
-	Mode() FilterMode
-}
-
-// TODO (Techassi): Make configurable
-func New(mode FilterMode) Filter {
-	return &DefaultFilter{
-		Rules:      make(map[string]net.IP),
-		FilterMode: mode,
-		TTL:        300,
-	}
-}
-
-type DefaultFilter struct {
+type Filter struct {
 	// FilterMode defines how the filter should answer a filtered request
 	FilterMode FilterMode
 
@@ -63,7 +41,7 @@ type DefaultFilter struct {
 	Rules map[string]net.IP
 }
 
-func (f *DefaultFilter) Match(message dns.Message) (bool, dns.Message, error) {
+func (f *Filter) Match(message dns.Message) (bool, dns.Message, error) {
 	var question = message.Question[0]
 
 	if ip, ok := f.Rules[question.Name]; ok {
@@ -123,7 +101,7 @@ func (f *DefaultFilter) Match(message dns.Message) (bool, dns.Message, error) {
 
 // ParseRule parses a filter rule with the following format: '<ip-address> <domain>'.
 // Example: '0.0.0.0 example.com'
-func (f *DefaultFilter) ParseRule(t RuleType, input string) (string, net.IP, error) {
+func (f *Filter) ParseRule(t RuleType, input string) (string, net.IP, error) {
 	// TODO (Techassi): Check domain validity (labels.IsValidDomain)
 	// FIXME (Techassi): Actually check rule type
 	parts := strings.Split(input, " ")
@@ -142,7 +120,7 @@ func (f *DefaultFilter) ParseRule(t RuleType, input string) (string, net.IP, err
 	}
 }
 
-func (f *DefaultFilter) AddRule(t RuleType, rule string) error {
+func (f *Filter) AddRule(t RuleType, rule string) error {
 	domain, ip, err := f.ParseRule(t, rule)
 	if err != nil {
 		return err
@@ -154,7 +132,7 @@ func (f *DefaultFilter) AddRule(t RuleType, rule string) error {
 	return nil
 }
 
-func (f *DefaultFilter) RemoveRule(domain string) error {
+func (f *Filter) RemoveRule(domain string) error {
 	if _, ok := f.Rules[domain]; ok {
 		delete(f.Rules, domain)
 		return nil
@@ -162,6 +140,6 @@ func (f *DefaultFilter) RemoveRule(domain string) error {
 	return ErrNoSuchRule
 }
 
-func (f *DefaultFilter) Mode() FilterMode {
+func (f *Filter) Mode() FilterMode {
 	return f.FilterMode
 }
