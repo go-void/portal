@@ -55,6 +55,8 @@ func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
 	return offset + 8, nil
 }
 
+// TODO (Techassi): Implement message compression
+
 // PackDomainName packs a name into buf and returns the new offset.
 // Example: example.com => 7 101 120 97 109 112 108 101 3 99 111 109 0.
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 <domain-name>
