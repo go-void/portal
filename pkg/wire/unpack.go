@@ -32,8 +32,6 @@ func UnpackIPv4Address(data []byte, offset int) (net.IP, int) {
 	return net.IPv4(data[offset], data[offset+1], data[offset+2], data[offset+3]), offset + 4
 }
 
-// NOTE (Techassi): Is this actually correct?
-
 // UnpackIPv6Address unpacks a IPv6 address and returns the new offset
 func UnpackIPv6Address(data []byte, offset int) (net.IP, int) {
 	hi, offset := UnpackUint64(data, offset)
@@ -46,9 +44,9 @@ func UnpackIPv6Address(data []byte, offset int) (net.IP, int) {
 	return ip, offset
 }
 
-// UnpackDomainName unwraps a domain name in a DNS question or in a RR header
+// UnpackDomainName unoacks a domain name in a DNS question or in a RR header
 func UnpackDomainName(data []byte, offset int) (string, int) {
-	// If we immediation encounter a null byte, the name is root (.)
+	// If we immediatly encounter a null byte, the name is root (.)
 	if data[offset] == 0x00 {
 		return ".", offset + 1
 	}
@@ -62,7 +60,11 @@ func UnpackDomainName(data []byte, offset int) (string, int) {
 		b := int(data[offset])
 		offset++
 
-		// Check if we have a pointer (11000000 => 0xC0)
+		// Check if we have a pointer (11000000 => 0xC0). Pointers point
+		// to domain names previously defined in some part of the message.
+		// We follow the pointer (by updating the offset) and reading in
+		// the domain name as usual. After encountering the null byte we
+		// jump back by updating the offset
 		switch b & 0xC0 {
 		case 0x00:
 			if b == 0x00 {
