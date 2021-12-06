@@ -65,3 +65,21 @@ func Rootify(name string) string {
 	}
 	return name + "."
 }
+
+// Len returns the length of the name in octects
+func Len(name string) int {
+	var c = 0
+
+	labels := strings.Split(name, ".")
+	for _, label := range labels {
+		c += 1 + len(label)
+	}
+
+	// Add addtional +1 for terminating null byte if the name doesn
+	// not end with "."
+	if len(labels[len(labels)-1]) != 0 {
+		c += 1
+	}
+
+	return c
+}

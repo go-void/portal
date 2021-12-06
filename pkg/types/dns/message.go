@@ -1,6 +1,8 @@
 package dns
 
 import (
+	"github.com/go-void/portal/pkg/constants"
+	"github.com/go-void/portal/pkg/labels"
 	m "github.com/go-void/portal/pkg/types/bitmasks"
 	"github.com/go-void/portal/pkg/types/opcode"
 	"github.com/go-void/portal/pkg/types/rcode"
@@ -155,4 +157,27 @@ func (m *Message) AddAdditional(record rr.RR) {
 
 	m.Additional = append(m.Additional, record)
 	m.Header.ARCount++
+}
+
+func (m *Message) Len() int {
+	// Fixed DNS header length
+	len := constants.DNSHeaderLen
+
+	// DNS question length
+	len += labels.Len(m.Question[0].Name)
+	len += constants.DNSQuestionFixedLen
+
+	for _, a := range m.Answer {
+		len += int(a.Len())
+	}
+
+	for _, a := range m.Authority {
+		len += int(a.Len())
+	}
+
+	for _, a := range m.Additional {
+		len += int(a.Len())
+	}
+
+	return len
 }
