@@ -7,8 +7,24 @@ block) DNS queries.
 
 ### General
 
--   **Logging:** At which level should we log and how do we pass the logger around in the best / most efficient way?
--   **Data collection:** How should we collect metrics / statistics which can be shown in the web interface of void?
+#### Logging 
+
+At which level should we log and how do we pass the logger around in the best / most efficient way?
+
+#### Data collection 
+
+How should we collect metrics / statistics which can be shown in the web interface of void?
+
+#### Caching 
+
+We need to support lookup of partial domain names: We currently do the following:
+
+- Check if we cached the whole domain name, e.g. `example.com`
+- If we did, return requested RR
+
+If we recursively resolve a domain name and encounter a NS record without any glue records we always start to resolve
+the domain name of the NS record from root (.). Instead we should lookup the cache if we have partial stored records of
+NS RRs.
 
 ### RFCs
 
@@ -40,8 +56,6 @@ To use the server as a standalone DNS server, follow these steps:
 3. Run the binary with `./portal`
 
 ### Library
-
-Import as a dependency
 
 ```go
 import (
