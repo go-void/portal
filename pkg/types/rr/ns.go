@@ -3,7 +3,7 @@ package rr
 import (
 	"fmt"
 
-	"github.com/go-void/portal/pkg/wire"
+	"github.com/go-void/portal/pkg/pack"
 )
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11
@@ -42,11 +42,11 @@ func (rr *NS) Len() uint16 {
 }
 
 func (rr *NS) Unpack(data []byte, offset int) (int, error) {
-	name, offset := wire.UnpackDomainName(data, offset)
+	name, offset := pack.UnpackDomainName(data, offset)
 	rr.NSDName = name
 	return offset, nil
 }
 
 func (rr *NS) Pack(buf []byte, offset int) (int, error) {
-	return wire.PackDomainName(rr.NSDName, buf, offset)
+	return pack.PackDomainName(rr.NSDName, buf, offset)
 }

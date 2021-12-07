@@ -1,6 +1,6 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import "github.com/go-void/portal/pkg/pack"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.12
 type PTR struct {
@@ -38,11 +38,11 @@ func (rr *PTR) Len() uint16 {
 }
 
 func (rr *PTR) Unpack(data []byte, offset int) (int, error) {
-	pointer, offset := wire.UnpackDomainName(data, offset)
+	pointer, offset := pack.UnpackDomainName(data, offset)
 	rr.PTRDName = pointer
 	return offset, nil
 }
 
 func (rr *PTR) Pack(buf []byte, offset int) (int, error) {
-	return wire.PackDomainName(rr.PTRDName, buf, offset)
+	return pack.PackDomainName(rr.PTRDName, buf, offset)
 }

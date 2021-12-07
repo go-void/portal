@@ -1,6 +1,6 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import "github.com/go-void/portal/pkg/pack"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.2
 type HINFO struct {
@@ -46,20 +46,20 @@ func (rr *HINFO) Len() uint16 {
 }
 
 func (rr *HINFO) Unpack(data []byte, offset int) (int, error) {
-	cpu, offset := wire.UnpackCharacterString(data, offset)
+	cpu, offset := pack.UnpackCharacterString(data, offset)
 	rr.CPU = cpu
 
-	os, offset := wire.UnpackCharacterString(data, offset)
+	os, offset := pack.UnpackCharacterString(data, offset)
 	rr.OS = os
 
 	return offset, nil
 }
 
 func (rr *HINFO) Pack(buf []byte, offset int) (int, error) {
-	offset, err := wire.PackCharacterString(rr.CPU, buf, offset)
+	offset, err := pack.PackCharacterString(rr.CPU, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	return wire.PackCharacterString(rr.OS, buf, offset)
+	return pack.PackCharacterString(rr.OS, buf, offset)
 }

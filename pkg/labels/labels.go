@@ -75,9 +75,9 @@ func Len(name string) int {
 		c += 1 + len(label)
 	}
 
-	// Add addtional +1 for terminating null byte if the name doesn
+	// Add addtional +1 for terminating null byte if the name does
 	// not end with "."
-	if len(labels[len(labels)-1]) != 0 {
+	if labels[len(labels)-1] != "" {
 		c += 1
 	}
 

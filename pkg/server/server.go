@@ -13,7 +13,7 @@ import (
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/dio"
 	"github.com/go-void/portal/pkg/filter"
-	"github.com/go-void/portal/pkg/pack"
+	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/resolver"
 	"github.com/go-void/portal/pkg/store"
 	"github.com/go-void/portal/pkg/tree"
@@ -64,11 +64,11 @@ type Server struct {
 
 	// Unpacker implements the Unpacker interface to unwrap
 	// DNS messages
-	Unpacker pack.Unpacker
+	Unpacker packers.Unpacker
 
 	// Packer implements the Packer interface to pack
 	// DNS messages
-	Packer pack.Packer
+	Packer packers.Packer
 
 	// Filter implements the Filter interface to enable DNS
 	// filtering
@@ -225,11 +225,11 @@ func (s *Server) Defaults() {
 	}
 
 	if s.Unpacker == nil {
-		s.Unpacker = pack.NewDefaultUnpacker()
+		s.Unpacker = packers.NewDefaultUnpacker()
 	}
 
 	if s.Packer == nil {
-		s.Packer = pack.NewDefaultPacker()
+		s.Packer = packers.NewDefaultPacker()
 	}
 
 	if s.Reader == nil {

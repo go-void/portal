@@ -1,6 +1,6 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import "github.com/go-void/portal/pkg/pack"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.6 (EXPERIMENTAL)
 type MG struct {
@@ -39,11 +39,11 @@ func (rr *MG) Len() uint16 {
 }
 
 func (rr *MG) Unpack(data []byte, offset int) (int, error) {
-	name, offset := wire.UnpackDomainName(data, offset)
+	name, offset := pack.UnpackDomainName(data, offset)
 	rr.MGMName = name
 	return offset, nil
 }
 
 func (rr *MG) Pack(buf []byte, offset int) (int, error) {
-	return wire.PackDomainName(rr.MGMName, buf, offset)
+	return pack.PackDomainName(rr.MGMName, buf, offset)
 }

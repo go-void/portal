@@ -1,6 +1,6 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import "github.com/go-void/portal/pkg/pack"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.9
 type MX struct {
@@ -46,20 +46,20 @@ func (rr *MX) Len() uint16 {
 }
 
 func (rr *MX) Unpack(data []byte, offset int) (int, error) {
-	preference, offset := wire.UnpackUint16(data, offset)
+	preference, offset := pack.UnpackUint16(data, offset)
 	rr.Preference = preference
 
-	exchange, offset := wire.UnpackDomainName(data, offset)
+	exchange, offset := pack.UnpackDomainName(data, offset)
 	rr.Exchange = exchange
 
 	return offset, nil
 }
 
 func (rr *MX) Pack(buf []byte, offset int) (int, error) {
-	offset, err := wire.PackUint16(rr.Preference, buf, offset)
+	offset, err := pack.PackUint16(rr.Preference, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	return wire.PackDomainName(rr.Exchange, buf, offset)
+	return pack.PackDomainName(rr.Exchange, buf, offset)
 }

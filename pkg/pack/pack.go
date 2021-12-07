@@ -1,5 +1,4 @@
-// Package wire provides utility functions to (un)pack raw data from and to the "wire"
-package wire
+package pack
 
 import (
 	"encoding/binary"

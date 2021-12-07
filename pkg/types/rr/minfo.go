@@ -1,6 +1,6 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import "github.com/go-void/portal/pkg/pack"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.7 (EXPERIMENTAL)
 type MINFO struct {
@@ -46,20 +46,20 @@ func (rr *MINFO) Len() uint16 {
 }
 
 func (rr *MINFO) Unpack(data []byte, offset int) (int, error) {
-	rmailbox, offset := wire.UnpackDomainName(data, offset)
+	rmailbox, offset := pack.UnpackDomainName(data, offset)
 	rr.RMailBox = rmailbox
 
-	emailbox, offset := wire.UnpackDomainName(data, offset)
+	emailbox, offset := pack.UnpackDomainName(data, offset)
 	rr.EMailBox = emailbox
 
 	return offset, nil
 }
 
 func (rr *MINFO) Pack(buf []byte, offset int) (int, error) {
-	offset, err := wire.PackDomainName(rr.RMailBox, buf, offset)
+	offset, err := pack.PackDomainName(rr.RMailBox, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	return wire.PackDomainName(rr.EMailBox, buf, offset)
+	return pack.PackDomainName(rr.EMailBox, buf, offset)
 }

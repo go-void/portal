@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/dio"
-	"github.com/go-void/portal/pkg/pack"
+	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/opcode"
 	"github.com/go-void/portal/pkg/types/rcode"
@@ -58,11 +58,11 @@ type DefaultClient struct {
 
 	// Unpacker implements the Unpacker interface to unwrap
 	// DNS messages
-	Unpacker pack.Unpacker
+	Unpacker packers.Unpacker
 
 	// Packer implements the Packer interface to pack
 	// DNS messages
-	Packer pack.Packer
+	Packer packers.Packer
 
 	// Reader implements the Reader interface to read
 	// incoming TCP and UDP messages
@@ -99,8 +99,8 @@ func NewDefault() *DefaultClient {
 	// TODO (Techassi): Make Client options configurable
 	return &DefaultClient{
 		Network:      "udp",
-		Unpacker:     pack.NewDefaultUnpacker(),
-		Packer:       pack.NewDefaultPacker(),
+		Unpacker:     packers.NewDefaultUnpacker(),
+		Packer:       packers.NewDefaultPacker(),
 		Reader:       dio.NewDefaultReader(size),
 		Writer:       dio.NewDefaultWriter(),
 		DialTimeout:  2 * time.Second,

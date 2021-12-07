@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/go-void/portal/pkg/wire"
+	"github.com/go-void/portal/pkg/pack"
 )
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.4.1
@@ -44,7 +44,7 @@ func (rr *A) Len() uint16 {
 }
 
 func (rr *A) Unpack(data []byte, offset int) (int, error) {
-	address, offset := wire.UnpackIPv4Address(data, offset)
+	address, offset := pack.UnpackIPv4Address(data, offset)
 	rr.Address = address
 	return offset, nil
 }

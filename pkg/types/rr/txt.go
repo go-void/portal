@@ -1,6 +1,6 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import "github.com/go-void/portal/pkg/pack"
 
 // TODO (Techassi): Figure out if a TXT record can hold multiple strings
 
@@ -45,5 +45,5 @@ func (rr *TXT) Unpack(data []byte, offset int) (int, error) {
 }
 
 func (rr *TXT) Pack(buf []byte, offset int) (int, error) {
-	return wire.PackCharacterString(rr.Data, buf, offset)
+	return pack.PackCharacterString(rr.Data, buf, offset)
 }

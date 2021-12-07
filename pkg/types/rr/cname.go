@@ -1,6 +1,6 @@
 package rr
 
-import "github.com/go-void/portal/pkg/wire"
+import "github.com/go-void/portal/pkg/pack"
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.1
 type CNAME struct {
@@ -38,11 +38,11 @@ func (rr *CNAME) Len() uint16 {
 }
 
 func (rr *CNAME) Unpack(data []byte, offset int) (int, error) {
-	target, offset := wire.UnpackDomainName(data, offset)
+	target, offset := pack.UnpackDomainName(data, offset)
 	rr.Target = target
 	return offset, nil
 }
 
 func (rr *CNAME) Pack(buf []byte, offset int) (int, error) {
-	return wire.PackDomainName(rr.Target, buf, offset)
+	return pack.PackDomainName(rr.Target, buf, offset)
 }

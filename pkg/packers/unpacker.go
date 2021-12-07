@@ -1,13 +1,13 @@
-package pack
+package packers
 
 import (
 	"bytes"
 	"encoding/binary"
 	"errors"
 
+	"github.com/go-void/portal/pkg/pack"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
-	"github.com/go-void/portal/pkg/wire"
 )
 
 var (
@@ -131,9 +131,9 @@ func (p *DefaultUnpacker) UnpackHeader(data []byte) (dns.Header, int, error) {
 
 // UnpackQuestion unpacks a question from the received byte slice
 func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question, int) {
-	qname, offset := wire.UnpackDomainName(data, offset)
-	t, offset := wire.UnpackUint16(data, offset)
-	c, offset := wire.UnpackUint16(data, offset)
+	qname, offset := pack.UnpackDomainName(data, offset)
+	t, offset := pack.UnpackUint16(data, offset)
+	c, offset := pack.UnpackUint16(data, offset)
 
 	q := dns.Question{
 		Name:  qname,
@@ -196,23 +196,23 @@ func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.Header, in
 	header := rr.Header{}
 
 	// Unpack NAME
-	name, offset := wire.UnpackDomainName(data, offset)
+	name, offset := pack.UnpackDomainName(data, offset)
 	header.Name = name
 
 	// Unpack TYPE
-	rrType, offset := wire.UnpackUint16(data, offset)
+	rrType, offset := pack.UnpackUint16(data, offset)
 	header.Type = rrType
 
 	// Unpack CLASS
-	rrClass, offset := wire.UnpackUint16(data, offset)
+	rrClass, offset := pack.UnpackUint16(data, offset)
 	header.Class = rrClass
 
 	// Unpack TTL
-	rrTTL, offset := wire.UnpackUint32(data, offset)
+	rrTTL, offset := pack.UnpackUint32(data, offset)
 	header.TTL = rrTTL
 
 	// Unpack RDLENGTH
-	rdlength, offset := wire.UnpackUint16(data, offset)
+	rdlength, offset := pack.UnpackUint16(data, offset)
 	header.RDLength = rdlength
 
 	return header, offset

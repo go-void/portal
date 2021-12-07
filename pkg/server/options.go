@@ -5,7 +5,7 @@ import (
 	"github.com/go-void/portal/pkg/collector"
 	"github.com/go-void/portal/pkg/dio"
 	"github.com/go-void/portal/pkg/filter"
-	"github.com/go-void/portal/pkg/pack"
+	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/resolver"
 )
 
@@ -38,14 +38,14 @@ func WithCollector(c collector.Collector) OptionsFunc {
 	}
 }
 
-func WithUnpacker(u pack.Unpacker) OptionsFunc {
+func WithUnpacker(u packers.Unpacker) OptionsFunc {
 	return func(s *Server) error {
 		s.Unpacker = u
 		return nil
 	}
 }
 
-func WithPacker(p pack.Packer) OptionsFunc {
+func WithPacker(p packers.Packer) OptionsFunc {
 	return func(s *Server) error {
 		s.Packer = p
 		return nil

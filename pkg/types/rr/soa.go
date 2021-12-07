@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-void/portal/pkg/constants"
-	"github.com/go-void/portal/pkg/wire"
+	"github.com/go-void/portal/pkg/pack"
 )
 
 var (
@@ -98,62 +98,62 @@ func (rr *SOA) Len() uint16 {
 }
 
 func (rr *SOA) Unpack(data []byte, offset int) (int, error) {
-	mname, offset := wire.UnpackDomainName(data, offset)
+	mname, offset := pack.UnpackDomainName(data, offset)
 	rr.MName = mname
 
-	rname, offset := wire.UnpackDomainName(data, offset)
+	rname, offset := pack.UnpackDomainName(data, offset)
 	rr.RName = rname
 
-	serial, offset := wire.UnpackUint32(data, offset)
+	serial, offset := pack.UnpackUint32(data, offset)
 	rr.Serial = serial
 
-	refresh, offset := wire.UnpackUint32(data, offset)
+	refresh, offset := pack.UnpackUint32(data, offset)
 	rr.Refresh = refresh
 
-	retry, offset := wire.UnpackUint32(data, offset)
+	retry, offset := pack.UnpackUint32(data, offset)
 	rr.Retry = retry
 
-	expire, offset := wire.UnpackUint32(data, offset)
+	expire, offset := pack.UnpackUint32(data, offset)
 	rr.Expire = expire
 
-	minimum, offset := wire.UnpackUint32(data, offset)
+	minimum, offset := pack.UnpackUint32(data, offset)
 	rr.Minimum = minimum
 
 	return offset, nil
 }
 
 func (rr *SOA) Pack(buf []byte, offset int) (int, error) {
-	offset, err := wire.PackDomainName(rr.MName, buf, offset)
+	offset, err := pack.PackDomainName(rr.MName, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = wire.PackDomainName(rr.RName, buf, offset)
+	offset, err = pack.PackDomainName(rr.RName, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = wire.PackUint32(rr.Serial, buf, offset)
+	offset, err = pack.PackUint32(rr.Serial, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = wire.PackUint32(rr.Refresh, buf, offset)
+	offset, err = pack.PackUint32(rr.Refresh, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = wire.PackUint32(rr.Retry, buf, offset)
+	offset, err = pack.PackUint32(rr.Retry, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = wire.PackUint32(rr.Expire, buf, offset)
+	offset, err = pack.PackUint32(rr.Expire, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	return wire.PackUint32(rr.Minimum, buf, offset)
+	return pack.PackUint32(rr.Minimum, buf, offset)
 }
 
 func (rr *SOA) SerialAdd(n int) error {
