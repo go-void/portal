@@ -14,8 +14,8 @@ type CompressionMap struct {
 }
 
 // NewCompressionMap returns a new empty compression map
-func NewCompressionMap() *CompressionMap {
-	return &CompressionMap{
+func NewCompressionMap() CompressionMap {
+	return CompressionMap{
 		ptrToName: make(map[int]string),
 		nameToPtr: make(map[string]int),
 	}

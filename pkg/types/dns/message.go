@@ -3,10 +3,11 @@ package dns
 import (
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/labels"
-	m "github.com/go-void/portal/pkg/types/bitmasks"
 	"github.com/go-void/portal/pkg/types/opcode"
 	"github.com/go-void/portal/pkg/types/rcode"
 	"github.com/go-void/portal/pkg/types/rr"
+
+	m "github.com/go-void/portal/pkg/types/bitmasks"
 )
 
 // Message describes a complete DNS message describes in RFC 1035
@@ -18,6 +19,10 @@ type Message struct {
 	Answer     []rr.RR
 	Authority  []rr.RR
 	Additional []rr.RR
+
+	// Compression keeps track of compression pointers
+	// and domain names
+	Compression CompressionMap
 }
 
 // Header describes the header data of a message. This header format
@@ -34,10 +39,10 @@ type Header struct {
 	RecursionAvailable bool        // RA
 	Zero               bool        // Z
 	RCode              rcode.Code  // RCODE
-	QDCount            uint16      // QDCOUNT
-	ANCount            uint16      // ANCOUNT
-	NSCount            uint16      // NSCOUNT
-	ARCount            uint16      // ARCOUNT
+	QDCount            uint16      // Question count
+	ANCount            uint16      // Answer count
+	NSCount            uint16      // Authority count
+	ARCount            uint16      // Additional record count
 }
 
 // RawHeader describes the raw header data of a message
@@ -53,6 +58,12 @@ type RawHeader struct {
 	ANCount uint16 // ANCOUNT
 	NSCount uint16 // NSCOUNT
 	ARCount uint16 // ARCOUNT
+}
+
+func NewMessage() Message {
+	return Message{
+		Compression: NewCompressionMap(),
+	}
 }
 
 // ToHeader converts a raw header to a header by applying

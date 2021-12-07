@@ -57,7 +57,7 @@ func NewDefaultUnpacker() Unpacker {
 
 // Unpack unpacks a single complete DNS message from the received byte slice
 func (p *DefaultUnpacker) Unpack(header dns.Header, data []byte, offset int) (dns.Message, error) {
-	m := dns.Message{}
+	m := dns.NewMessage()
 	m.Header = header
 
 	// Immediatly return if the message only consists of header data
@@ -131,17 +131,17 @@ func (p *DefaultUnpacker) UnpackHeader(data []byte) (dns.Header, int, error) {
 
 // UnpackQuestion unpacks a question from the received byte slice
 func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question, int) {
-	qname, offset := pack.UnpackDomainName(data, offset)
+	q, offset := pack.UnpackDomainName(data, offset)
 	t, offset := pack.UnpackUint16(data, offset)
 	c, offset := pack.UnpackUint16(data, offset)
 
-	q := dns.Question{
-		Name:  qname,
+	question := dns.Question{
+		Name:  q,
 		Type:  t,
 		Class: c,
 	}
 
-	return q, offset
+	return question, offset
 }
 
 // UnpackRRList unpacks a list of resource records from the received byte slice
