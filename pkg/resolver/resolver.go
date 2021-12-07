@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrNoAnswer = errors.New("no answer")
+	ErrFatal    = errors.New("resolver: fatal error")
+	ErrNoAnswer = errors.New("resolver: no answer")
 )
 
 // Resolver describes a DNS resolver which can resolve
