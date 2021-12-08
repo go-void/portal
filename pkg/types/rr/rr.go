@@ -67,34 +67,14 @@ type Header struct {
 	RDLength uint16
 }
 
-// NOTE (Techassi): Maybe generate this
-var typeMap = map[uint16]func() RR{
-	TypeCNAME: func() RR { return new(CNAME) },
-	TypeHINFO: func() RR { return new(HINFO) },
-	TypeMB:    func() RR { return new(MB) },
-	TypeMD:    func() RR { return new(MD) },
-	TypeMF:    func() RR { return new(MF) },
-	TypeMG:    func() RR { return new(MG) },
-	TypeMINFO: func() RR { return new(MINFO) },
-	TypeMR:    func() RR { return new(MR) },
-	TypeMX:    func() RR { return new(MX) },
-	TypeNULL:  func() RR { return new(NULL) },
-	TypeNS:    func() RR { return new(NS) },
-	TypePTR:   func() RR { return new(PTR) },
-	TypeSOA:   func() RR { return new(SOA) },
-	TypeTXT:   func() RR { return new(TXT) },
-	TypeA:     func() RR { return new(A) },
-	TypeAAAA:  func() RR { return new(AAAA) },
-}
-
 // New returns a new RR based on the provided type
 func New(t uint16) (RR, error) {
-	rr, ok := typeMap[t]
+	create, ok := typeMap[t]
 	if !ok {
 		return nil, ErrNoSuchType
 	}
 
-	return rr(), nil
+	return create(), nil
 }
 
 // NewFromName returns a new RR based on the provided name

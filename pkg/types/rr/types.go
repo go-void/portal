@@ -17,8 +17,8 @@ const (
 	TypeMINFO uint16 = 14 // Mailbox or mail list information
 	TypeMX    uint16 = 15 // Mail exchange
 	TypeTXT   uint16 = 16 // Text strings
-
-	TypeAAAA uint16 = 28 // AAAA host address
+	TypeAAAA  uint16 = 28 // AAAA host address
+	TypeOPT   uint16 = 41 // OPT Record / Meta record
 
 	// QTypes are a superset of types and should only be
 	// allowed in questions
@@ -28,6 +28,25 @@ const (
 	TypeMAILA uint16 = 254 // A request for mail agent RRs (Obsolete - see MX)
 	TypeANY   uint16 = 255 // A request for all records (*)
 )
+
+var typeMap = map[uint16]func() RR{
+	TypeCNAME: func() RR { return new(CNAME) },
+	TypeHINFO: func() RR { return new(HINFO) },
+	TypeMB:    func() RR { return new(MB) },
+	TypeMD:    func() RR { return new(MD) },
+	TypeMF:    func() RR { return new(MF) },
+	TypeMG:    func() RR { return new(MG) },
+	TypeMINFO: func() RR { return new(MINFO) },
+	TypeMR:    func() RR { return new(MR) },
+	TypeMX:    func() RR { return new(MX) },
+	TypeNULL:  func() RR { return new(NULL) },
+	TypeNS:    func() RR { return new(NS) },
+	TypePTR:   func() RR { return new(PTR) },
+	TypeSOA:   func() RR { return new(SOA) },
+	TypeTXT:   func() RR { return new(TXT) },
+	TypeA:     func() RR { return new(A) },
+	TypeAAAA:  func() RR { return new(AAAA) },
+}
 
 var typeToStringMap = map[uint16]string{
 	TypeNone:  "NONE",
@@ -47,6 +66,7 @@ var typeToStringMap = map[uint16]string{
 	TypeMX:    "MX",
 	TypeTXT:   "TXT",
 	TypeAAAA:  "AAAA",
+	TypeOPT:   "OPT",
 	TypeAXFR:  "AXFR",
 	TypeMAILB: "MAILB",
 	TypeMAILA: "MAILA",
@@ -71,6 +91,7 @@ var stringToTypeMap = map[string]uint16{
 	"MX":    TypeMX,
 	"TXT":   TypeTXT,
 	"AAAA":  TypeAAAA,
+	"OPT":   TypeOPT,
 	"AXFR":  TypeAXFR,
 	"MAILB": TypeMAILB,
 	"MAILA": TypeMAILA,

@@ -3,6 +3,8 @@ package pack
 import (
 	"encoding/binary"
 	"net"
+
+	"github.com/go-void/portal/pkg/types/edns"
 )
 
 // TODO (Techassi): Add offset overflow check
@@ -104,4 +106,31 @@ func UnpackCharacterString(data []byte, offset int) (string, int) {
 	}
 
 	return string(t), offset
+}
+
+func UnpackEDNSOptions(data []byte, offset int, rdlen uint16) ([]edns.Option, int, error) {
+	var options []edns.Option
+
+	for offset < int(rdlen) {
+		// TODO (Techassi): Add offset validation
+		code := binary.BigEndian.Uint16(data[offset:])
+		offset += 2
+
+		length := binary.BigEndian.Uint16(data[offset:])
+		offset += 2
+
+		option, err := edns.New(code)
+		if err != nil {
+			return options, offset, err
+		}
+
+		offset, err = option.Unpack(data, offset, length)
+		if err != nil {
+			return options, offset, err
+		}
+
+		// TODO (Techassi): Add offset validation
+	}
+
+	return options, offset, nil
 }
