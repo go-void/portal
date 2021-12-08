@@ -7,13 +7,10 @@ block) DNS queries.
 
 ### General
 
-#### Logging 
-
-At which level should we log and how do we pass the logger around in the best / most efficient way?
-
-#### Data collection 
-
-How should we collect metrics / statistics which can be shown in the web interface of void?
+- At which level should we log and how do we pass the logger around in the best / most efficient way?
+- How should we collect metrics / statistics which can be shown in the web interface of void?
+- Implement mechanism to return FORMERR when unpacking a message (prior to handling). Maybe move the unpacking into the
+  handling func to be able to handle these kind of errors better and in a centralized place. (See OPT record)
 
 #### Caching 
 
