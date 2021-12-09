@@ -46,6 +46,7 @@ var typeMap = map[uint16]func() RR{
 	TypeTXT:   func() RR { return new(TXT) },
 	TypeA:     func() RR { return new(A) },
 	TypeAAAA:  func() RR { return new(AAAA) },
+	TypeOPT:   func() RR { return new(OPT) },
 }
 
 var typeToStringMap = map[uint16]string{

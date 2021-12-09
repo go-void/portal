@@ -109,9 +109,10 @@ func UnpackCharacterString(data []byte, offset int) (string, int) {
 }
 
 func UnpackEDNSOptions(data []byte, offset int, rdlen uint16) ([]edns.Option, int, error) {
+	var optionLength = offset + int(rdlen)
 	var options []edns.Option
 
-	for offset < int(rdlen) {
+	for offset < optionLength {
 		// TODO (Techassi): Add offset validation
 		code := binary.BigEndian.Uint16(data[offset:])
 		offset += 2
@@ -124,12 +125,14 @@ func UnpackEDNSOptions(data []byte, offset int, rdlen uint16) ([]edns.Option, in
 			return options, offset, err
 		}
 
+		// TODO (Techassi): Add offset validation
 		offset, err = option.Unpack(data, offset, length)
 		if err != nil {
 			return options, offset, err
 		}
 
-		// TODO (Techassi): Add offset validation
+		options = append(options, option)
+		offset += int(length)
 	}
 
 	return options, offset, nil

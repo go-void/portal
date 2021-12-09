@@ -14,7 +14,7 @@ const (
 	CodeN3U          uint16 = 7
 	CodeECS          uint16 = 8
 	CodeEXPIRE       uint16 = 9
-	CodeCOOKIE       uint16 = 10
+	CodeCOOKIE       uint16 = 10 // Cookies [RFC 7873]
 	CodeTCPKEEPALIVE uint16 = 11
 	CodePADDING      uint16 = 12
 	CodeCHAIN        uint16 = 13
@@ -45,7 +45,7 @@ var codeMap = map[uint16]func() Option{
 	CodeN3U:           func() Option { return nil },
 	CodeECS:           func() Option { return nil },
 	CodeEXPIRE:        func() Option { return nil },
-	CodeCOOKIE:        func() Option { return nil },
+	CodeCOOKIE:        func() Option { return new(Cookie) },
 	CodeTCPKEEPALIVE:  func() Option { return nil },
 	CodePADDING:       func() Option { return nil },
 	CodeCHAIN:         func() Option { return nil },
