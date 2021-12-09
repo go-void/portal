@@ -45,6 +45,23 @@ func (o *Cookie) Unpack(data []byte, offset int, length uint16) (int, error) {
 }
 
 // Pack packs the option data
-func (o *Cookie) Pack(_ []byte, _ int) (int, error) {
-	panic("not implemented") // TODO: Implement
+func (o *Cookie) Pack(buf []byte, offset int) (int, error) {
+	client, err := hex.DecodeString(o.Client)
+	if err != nil {
+		return offset, err
+	}
+	copy(buf[offset:], client)
+	offset += 8
+
+	if len(o.Server) == 0 {
+		return offset, nil
+	}
+
+	server, err := hex.DecodeString(o.Server)
+	if err != nil {
+		return offset, err
+	}
+	copy(buf[offset:], server)
+
+	return offset + len(server), nil
 }

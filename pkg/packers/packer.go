@@ -72,7 +72,7 @@ func (p *DefaultPacker) Pack(message dns.Message) ([]byte, error) {
 		return buf, err
 	}
 
-	_, err = p.PackRRList(message.Additional, buf, offset)
+	offset, err = p.PackRRList(message.Additional, buf, offset)
 	return buf[:offset], err
 }
 

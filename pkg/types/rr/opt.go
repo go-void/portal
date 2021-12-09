@@ -56,5 +56,9 @@ func (rr *OPT) Unpack(data []byte, offset int) (int, error) {
 }
 
 func (rr *OPT) Pack(buf []byte, offset int) (int, error) {
-	return offset + 4, nil
+	offset, err := pack.PackEDNSOptions(rr.Options, buf, offset)
+	if err != nil {
+		return offset, err
+	}
+	return offset, nil
 }

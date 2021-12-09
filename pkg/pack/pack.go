@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/go-void/portal/pkg/labels"
+	"github.com/go-void/portal/pkg/types/edns"
 )
 
 var (
@@ -98,6 +99,30 @@ func PackCharacterString(characters string, buf []byte, offset int) (int, error)
 	for i := 0; i < len(characters); i++ {
 		buf[offset] = characters[i]
 		offset++
+	}
+
+	return offset, nil
+}
+
+func PackEDNSOptions(options []edns.Option, buf []byte, offset int) (int, error) {
+	for _, option := range options {
+		o, err := PackUint16(option.Code(), buf, offset)
+		if err != nil {
+			return offset, err
+		}
+		offset = o
+
+		o, err = PackUint16(option.Len(), buf, offset)
+		if err != nil {
+			return offset, err
+		}
+		offset = o
+
+		o, err = option.Pack(buf, offset)
+		if err != nil {
+			return offset, err
+		}
+		offset = o
 	}
 
 	return offset, nil
