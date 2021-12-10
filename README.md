@@ -26,24 +26,25 @@ NS RRs.
 
 ### RFCs
 
--   IN-ADDR.ARPA domain [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-3.5)
--   Message compression [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.4)
--   Finalize Master Files Parsing [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-5)
--   Implement RPZs [DRAFT Vixie DNS RPZ](https://datatracker.ietf.org/doc/html/draft-vixie-dns-rpz-00)
+- IN-ADDR.ARPA domain [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-3.5)
+- Message compression [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.4)
+- Finalize Master Files Parsing [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-5)
+- Implement functions [RFC 5001](https://datatracker.ietf.org/doc/html/rfc5001)
+- Implement functions [RFC 6975](https://datatracker.ietf.org/doc/html/rfc6975)
 
 ### RFS to implement
 
+- RPZs [DRAFT Vixie DNS RPZ](https://datatracker.ietf.org/doc/html/draft-vixie-dns-rpz-00)
 - LOC RR [RFC 1876](https://datatracker.ietf.org/doc/html/rfc1876)
 - Incremental Zone Transfer in DNS [RFC 1995](https://datatracker.ietf.org/doc/html/rfc1995)
 - Implement EDNS [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
-  - Apple's DNS Long-Lived Queries Protocol [RFC 8764](https://datatracker.ietf.org/doc/html/rfc8764)
-  - DNS Name Server Identifier (NSID) [RFC 5001](https://datatracker.ietf.org/doc/html/rfc5001)
 
 ## Supported RFCs
 
 - Domain Names - Concepts and Facilities [RFC 1034](https://datatracker.ietf.org/doc/html/rfc1034)
 - Domain Names - Implementation and Specification [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035)
 - Serial Number Arithmetic [RFC 1982](https://datatracker.ietf.org/doc/html/rfc1982)
+- Extension Mechanisms for DNS (EDNS(0)) [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
 
 ## Usage
 
