@@ -11,6 +11,7 @@ block) DNS queries.
 - How should we collect metrics / statistics which can be shown in the web interface of void?
 - Implement mechanism to return FORMERR when unpacking a message (prior to handling). Maybe move the unpacking into the
   handling func to be able to handle these kind of errors better and in a centralized place. (See OPT record)
+- Figure out a way to handle EDNS Options with access to some core components like cache, etc.
 
 #### Caching 
 
@@ -35,6 +36,8 @@ NS RRs.
 - LOC RR [RFC 1876](https://datatracker.ietf.org/doc/html/rfc1876)
 - Incremental Zone Transfer in DNS [RFC 1995](https://datatracker.ietf.org/doc/html/rfc1995)
 - Implement EDNS [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
+  - Apple's DNS Long-Lived Queries Protocol [RFC 8764](https://datatracker.ietf.org/doc/html/rfc8764)
+  - DNS Name Server Identifier (NSID) [RFC 5001](https://datatracker.ietf.org/doc/html/rfc5001)
 
 ## Supported RFCs
 
