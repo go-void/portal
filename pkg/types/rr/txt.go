@@ -41,6 +41,8 @@ func (rr *TXT) Len() uint16 {
 
 func (rr *TXT) Unpack(data []byte, offset int) (int, error) {
 	// TODO (Techassi): Figure out how to unpack multiple character strings
+	str, offset := pack.UnpackCharacterString(data, offset)
+	rr.Data = str
 	return offset, nil
 }
 
