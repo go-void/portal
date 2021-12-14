@@ -126,7 +126,7 @@ func (h *Header) ToRaw() RawHeader {
 	return rh
 }
 
-func (m *Message) IsResponse() {
+func (m *Message) SetIsResponse() {
 	m.Header.IsQuery = false
 }
 
@@ -191,4 +191,16 @@ func (m *Message) Len() int {
 	}
 
 	return len
+}
+
+// IsEDNS returns if the message has an EDNS OPT record
+func (m *Message) IsEDNS() bool {
+	// We iterate from the back because the OPT RR is usually at the
+	// end of the additional records
+	for i := len(m.Additional) - 1; i >= 0; i-- {
+		if _, ok := m.Additional[i].(*rr.OPT); ok {
+			return true
+		}
+	}
+	return false
 }

@@ -298,7 +298,7 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 	}
 
 	message.AddAnswer(record)
-	message.IsResponse()
+	message.SetIsResponse()
 
 	end := time.Since(start)
 	centry := collector.NewEntry(message.Question[0], message.Answer[0], end, ip)
