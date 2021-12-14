@@ -1,7 +1,6 @@
 package rr
 
 import (
-	"encoding/binary"
 	"fmt"
 	"net"
 
@@ -50,7 +49,5 @@ func (rr *AAAA) Unpack(data []byte, offset int) (int, error) {
 }
 
 func (rr *AAAA) Pack(buf []byte, offset int) (int, error) {
-	ip := binary.BigEndian.Uint32(rr.Address[12:16])
-	binary.BigEndian.PutUint32(buf[offset:], ip)
-	return offset + 4, nil
+	return pack.PackIPAddress(rr.Address, buf, offset)
 }
