@@ -26,9 +26,9 @@ NS RRs.
 
 ### RFCs
 
+- Finalize Master Files Parsing [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-5)
 - IN-ADDR.ARPA domain [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-3.5)
 - Message compression [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.4)
-- Finalize Master Files Parsing [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035#section-5)
 - Implement functions [RFC 5001](https://datatracker.ietf.org/doc/html/rfc5001)
 - Implement functions [RFC 6975](https://datatracker.ietf.org/doc/html/rfc6975)
 
@@ -37,7 +37,6 @@ NS RRs.
 - RPZs [DRAFT Vixie DNS RPZ](https://datatracker.ietf.org/doc/html/draft-vixie-dns-rpz-00)
 - LOC RR [RFC 1876](https://datatracker.ietf.org/doc/html/rfc1876)
 - Incremental Zone Transfer in DNS [RFC 1995](https://datatracker.ietf.org/doc/html/rfc1995)
-- Implement EDNS [RFC 6891](https://datatracker.ietf.org/doc/html/rfc6891)
 
 ## Supported RFCs
 
