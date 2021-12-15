@@ -1,6 +1,11 @@
 package rr
 
-import "github.com/go-void/portal/pkg/pack"
+import (
+	"fmt"
+
+	"github.com/go-void/portal/pkg/labels"
+	"github.com/go-void/portal/pkg/pack"
+)
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.9
 type MX struct {
@@ -38,11 +43,11 @@ func (rr *MX) SetData(data ...interface{}) error {
 }
 
 func (rr *MX) String() string {
-	return ""
+	return fmt.Sprintf("MX <%v Preference: %d, Exchange: %s>", rr.H, rr.Preference, rr.Exchange)
 }
 
 func (rr *MX) Len() uint16 {
-	return uint16(len(rr.Exchange)) + 3
+	return uint16(labels.Len(rr.Exchange)) + 2
 }
 
 func (rr *MX) Unpack(data []byte, offset int) (int, error) {

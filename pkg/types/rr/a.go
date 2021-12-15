@@ -36,7 +36,7 @@ func (rr *A) SetData(data ...interface{}) error {
 }
 
 func (rr *A) String() string {
-	return fmt.Sprintf("%v %s", rr.H, rr.Address)
+	return fmt.Sprintf("A <%v %s>", rr.H, rr.Address)
 }
 
 func (rr *A) Len() uint16 {

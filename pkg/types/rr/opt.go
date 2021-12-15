@@ -35,7 +35,7 @@ func (rr *OPT) SetData(data ...interface{}) error {
 }
 
 func (rr *OPT) String() string {
-	return fmt.Sprintf("%v %v", rr.H, rr.Options)
+	return fmt.Sprintf("OPT <%v %v>", rr.H, rr.Options)
 }
 
 func (rr *OPT) Len() uint16 {
