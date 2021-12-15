@@ -39,9 +39,9 @@ func PackUint32(data uint32, buf []byte, offset int) (int, error) {
 // PackIPAddress packs a IP address (v4 or v6) into buf and returns
 // the new offset
 func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
-	if len(ip) == 16 {
-		i := binary.BigEndian.Uint32(ip[12:16])
-		binary.BigEndian.PutUint32(buf[offset:], i)
+	if i := ip.To4(); i != nil {
+		ipAsUint32 := binary.BigEndian.Uint32(i)
+		binary.BigEndian.PutUint32(buf[offset:], ipAsUint32)
 		return offset + 4, nil
 	}
 
