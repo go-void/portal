@@ -130,6 +130,10 @@ func (m *Message) SetIsResponse() {
 	m.Header.IsQuery = false
 }
 
+func (m *Message) SetRecursionAvailable(ra bool) {
+	m.Header.RecursionAvailable = m.Header.RecursionDesired && ra
+}
+
 // AddQuestion adds a question to the question section
 // of a DNS message
 func (m *Message) AddQuestion(question Question) {
@@ -146,6 +150,15 @@ func (m *Message) AddAnswer(record rr.RR) {
 
 	m.Answer = append(m.Answer, record)
 	m.Header.ANCount++
+}
+
+func (m *Message) AddAnswers(records []rr.RR) {
+	if records == nil {
+		return
+	}
+
+	m.Answer = append(m.Answer, records...)
+	m.Header.ANCount += uint16(len(records))
 }
 
 // AddAuthority adds a resource record to the
