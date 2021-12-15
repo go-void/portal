@@ -12,6 +12,7 @@ block) DNS queries.
 - Implement mechanism to return FORMERR when unpacking a message (prior to handling). Maybe move the unpacking into the
   handling func to be able to handle these kind of errors better and in a centralized place. (See OPT record)
 - Figure out a way to handle EDNS Options with access to some core components like cache, etc.
+- Adjust resolver API to allow return of multiple answer records
 
 #### Caching 
 
