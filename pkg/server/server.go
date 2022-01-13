@@ -13,6 +13,7 @@ import (
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/dio"
 	"github.com/go-void/portal/pkg/filter"
+	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/resolver"
 	"github.com/go-void/portal/pkg/store"
@@ -20,6 +21,7 @@ import (
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 
+	"go.uber.org/zap"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 )
@@ -96,6 +98,11 @@ type Server struct {
 	// query logs
 	Collector collector.Collector
 
+	// Logger is a light-weight wrapper around zap.Logger which
+	// allows to the server (and all sub-components) to write
+	// structured and leveled logs to one or multiple files
+	Logger *logger.Logger
+
 	// UDPMessageSize is the default message size to create
 	// the temporary slice of bytes within the messageList
 	// pool
@@ -165,6 +172,15 @@ func (s *Server) Run() error {
 		return ErrServerAlreadyRunning
 	}
 
+	// Setup logger
+	l, err := logger.New(s.config.Log)
+	if err != nil {
+		return err
+	}
+	s.Logger = l
+
+	s.Logger.Info("Start server")
+
 	// Setup defaults
 	s.Defaults()
 
@@ -176,6 +192,7 @@ func (s *Server) Run() error {
 	case "udp", "udp4", "udp6":
 		listener, err := createUDPListener(s.Network, s.Address, s.Port)
 		if err != nil {
+			s.Logger.Error("failed to create UDP listener", zap.Error(err))
 			return err
 		}
 		s.UDPListener = listener
@@ -184,6 +201,7 @@ func (s *Server) Run() error {
 	case "tcp", "tcp4", "tcp6":
 		listener, err := createTCPListener(s.Network, s.Address, s.Port)
 		if err != nil {
+			s.Logger.Error("failed to create TCP listener", zap.Error(err))
 			return err
 		}
 		s.TCPListener = listener
@@ -205,8 +223,9 @@ func (s *Server) Configure(opts ...OptionsFunc) error {
 	return nil
 }
 
-// Defaults initializes default server parameters and checks if all neccesary components are registered. If not it
-// falls back to defaults. This functions expects a validated config.Config
+// Defaults initializes default server parameters and checks if all neccesary
+// components are registered. If not it falls back to defaults. This functions
+// expects a validated config.Config
 func (s *Server) Defaults() {
 	if s.Filter == nil {
 		s.Filter = filter.NewEngine()

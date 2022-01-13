@@ -23,6 +23,7 @@ type Config struct {
 	Resolver  ResolverOptions  `toml:"resolver"`
 	Filter    FilterOptions    `toml:"filter"`
 	Server    ServerOptions    `toml:"server"`
+	Log       LogOptions       `toml:"log"`
 }
 
 type CollectorOptions struct {
@@ -55,6 +56,12 @@ type ServerOptions struct {
 	Port         int    `toml:"port"`
 }
 
+type LogOptions struct {
+	Mode    string   `toml:"mode"`
+	Level   string   `toml:"level"`
+	Outputs []string `toml:"outputs"`
+}
+
 // Default returns a config with default values
 func Default() *Config {
 	return &Config{
@@ -80,6 +87,11 @@ func Default() *Config {
 			Interval:   900,
 			Enabled:    true,
 			Backend:    "default",
+		},
+		Log: LogOptions{
+			Mode:    "production",
+			Level:   "error",
+			Outputs: []string{"stdout"},
 		},
 	}
 }

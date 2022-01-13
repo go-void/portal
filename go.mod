@@ -4,4 +4,9 @@ go 1.17
 
 require golang.org/x/net v0.0.0-20211118161319-6a13c67c3ce4
 
-require golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
+require (
+	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/multierr v1.7.0 // indirect
+	go.uber.org/zap v1.20.0 // indirect
+	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
+)

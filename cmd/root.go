@@ -35,6 +35,11 @@ func Execute() error {
 					Interval:   600,
 					Backend:    "default",
 				},
+				Log: config.LogOptions{
+					Mode:    "dev",
+					Level:   "debug",
+					Outputs: []string{"stdout"},
+				},
 			}
 
 			err := cfg.Validate()
