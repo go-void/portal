@@ -179,7 +179,7 @@ func (s *Server) Run() error {
 	}
 	s.Logger = l
 
-	s.Logger.Info("Start server")
+	s.Logger.Info("start server", zap.String("context", "server"))
 
 	// Setup defaults
 	s.Defaults()
@@ -192,7 +192,10 @@ func (s *Server) Run() error {
 	case "udp", "udp4", "udp6":
 		listener, err := createUDPListener(s.Network, s.Address, s.Port)
 		if err != nil {
-			s.Logger.Error("failed to create UDP listener", zap.Error(err))
+			s.Logger.Error("failed to create UDP listener",
+				zap.String("context", "server"),
+				zap.Error(err),
+			)
 			return err
 		}
 		s.UDPListener = listener
@@ -201,7 +204,10 @@ func (s *Server) Run() error {
 	case "tcp", "tcp4", "tcp6":
 		listener, err := createTCPListener(s.Network, s.Address, s.Port)
 		if err != nil {
-			s.Logger.Error("failed to create TCP listener", zap.Error(err))
+			s.Logger.Error("failed to create TCP listener",
+				zap.String("context", "server"),
+				zap.Error(err),
+			)
 			return err
 		}
 		s.TCPListener = listener
@@ -272,7 +278,19 @@ func (s *Server) Defaults() {
 func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 	start := time.Now()
 
+	s.Logger.Debug("handle incoming DNS request",
+		zap.String("context", "server"),
+		zap.String("address", ip.String()),
+		zap.Object("message", message),
+	)
+
 	if len(message.Question) == 0 {
+		s.Logger.Debug("empty DNS request (no question)",
+			zap.String("context", "server"),
+			zap.String("address", ip.String()),
+			zap.Object("message", message),
+		)
+
 		s.conns.Done()
 		return message, ErrNoQuestions
 	}
@@ -283,6 +301,13 @@ func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
 	filtered, message, err := s.Filter.Match(ip, message)
 	if err != nil {
 		// FIXME (Techassi): How whould we handle a filter error? Should we abort or continue (and answer the query)
+		s.Logger.Error("failed to match filter",
+			zap.String("context", "server"),
+			zap.String("address", ip.String()),
+			zap.Object("message", message),
+			zap.Error(err),
+		)
+
 		return message, err
 	}
 
@@ -336,6 +361,7 @@ func (s *Server) isRunning() bool {
 }
 
 func (s *Server) Shutdown() {
+	s.Logger.Close()
 	s.wg.Done()
 }
 
