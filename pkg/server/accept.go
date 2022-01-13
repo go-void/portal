@@ -35,3 +35,7 @@ func DefaultAcceptFunc(h dns.Header) AcceptAction {
 	// Potentially some more early exist conditions
 	return AcceptMessage
 }
+
+func (a AcceptAction) String() string {
+	return []string{"accepted", "rejected", "ignored", "noimpl"}[a]
+}
