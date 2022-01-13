@@ -81,7 +81,7 @@ func UnpackDomainName(data []byte, offset int) (string, int) {
 			if !followed {
 				offsetBeforePtr = offset + 1
 			}
-			offset = int(b^0xC0)<<8 | int(data[offset])
+			offset = (b^0xC0)<<8 | int(data[offset])
 			followed = true
 		}
 	}
