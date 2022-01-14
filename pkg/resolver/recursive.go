@@ -9,33 +9,37 @@ import (
 	"github.com/go-void/portal/pkg/cache"
 	"github.com/go-void/portal/pkg/client"
 	"github.com/go-void/portal/pkg/config"
+	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 )
 
 type RecursiveResolver struct {
-	// Client is a DNS client which sends queries to
+	// client is a DNS client which sends queries to
 	// external DNS servers
-	Client client.Client
+	client client.Client
 
-	MaxExpired int
+	maxExpired int
 
 	// hints is a slice of root DNS server hints
-	Hints []net.IP
+	hints []net.IP
 
-	// HintIndex keeps track of which root server should
+	// hintIndex keeps track of which root server should
 	// be used. It is a simple round-robin algorithm
-	HintIndex int
+	hintIndex int
 
 	// Access to the cache instance
-	Cache cache.Cache
+	cache cache.Cache
+
+	// Access to the logger instance
+	logger *logger.Logger
 
 	cacheEnabled bool
 	lock         sync.RWMutex
 }
 
 // NewRecursiveResolver returns a new recursive resolver
-func NewRecursiveResolver(cfg config.ResolverOptions, c cache.Cache) *RecursiveResolver {
+func NewRecursiveResolver(cfg config.ResolverOptions, c cache.Cache, l *logger.Logger) *RecursiveResolver {
 	// TODO (Techassi): Read in hints
 	hints := []net.IP{
 		net.ParseIP("198.41.0.4"),
@@ -43,9 +47,10 @@ func NewRecursiveResolver(cfg config.ResolverOptions, c cache.Cache) *RecursiveR
 	}
 
 	return &RecursiveResolver{
-		Client:       client.NewDefault(),
-		Hints:        hints,
-		Cache:        c,
+		client:       client.NewDefault(),
+		hints:        hints,
+		cache:        c,
+		logger:       l,
 		cacheEnabled: cfg.CacheEnabled,
 	}
 }
@@ -66,11 +71,12 @@ func (r *RecursiveResolver) Resolve(name string, class, t uint16) (rr.RR, error)
 
 	response, err := r.Lookup(name, class, t)
 	if err != nil {
+
 		return nil, err
 	}
 
 	if r.cacheEnabled {
-		err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+		err = r.cache.Set(name, class, t, response, response.Header().TTL)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -83,7 +89,7 @@ func (r *RecursiveResolver) Lookup(name string, class, t uint16) (rr.RR, error) 
 	var ip = r.Hint()
 
 	for {
-		response, err := r.Client.Query(name, class, t, ip)
+		response, err := r.client.Query(name, class, t, ip)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +121,7 @@ func (r *RecursiveResolver) Refresh(name string, class, t uint16) {
 		return
 	}
 
-	err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+	err = r.cache.Set(name, class, t, response, response.Header().TTL)
 	if err != nil {
 		// NOTE (Techassi): Log this
 	}
@@ -125,20 +131,20 @@ func (r *RecursiveResolver) Refresh(name string, class, t uint16) {
 func (r *RecursiveResolver) Hint() net.IP {
 	r.lock.Lock()
 
-	if r.HintIndex == len(r.Hints)-1 {
-		r.HintIndex = 0
+	if r.hintIndex == len(r.hints)-1 {
+		r.hintIndex = 0
 	} else {
-		r.HintIndex++
+		r.hintIndex++
 	}
-	i := r.HintIndex
+	i := r.hintIndex
 
 	r.lock.Unlock()
-	return r.Hints[i]
+	return r.hints[i]
 }
 
 // LookupInCache is a convenience function which abstracts the lookup of a domain name in the cache
 func (r *RecursiveResolver) LookupInCache(name string, class, t uint16) (rr.RR, bool) {
-	entry, status, err := r.Cache.Lookup(name, class, t)
+	entry, status, err := r.cache.Lookup(name, class, t)
 	if err != nil {
 		fmt.Println(err)
 		return nil, false
@@ -149,7 +155,7 @@ func (r *RecursiveResolver) LookupInCache(name string, class, t uint16) (rr.RR, 
 	}
 
 	if status == cache.Expired {
-		max := entry.Expire.Add(time.Duration(r.MaxExpired) * time.Second)
+		max := entry.Expire.Add(time.Duration(r.maxExpired) * time.Second)
 		if max.After(time.Now()) {
 			go r.Refresh(name, class, t)
 			return entry.Record, true
@@ -185,7 +191,7 @@ func (r *RecursiveResolver) FindGlue(response dns.Message, class, t uint16) (net
 
 			// Cache NS records
 			if r.cacheEnabled {
-				err := r.Cache.Set(ns.NSDName, class, t, adrr, adrr.Header().TTL)
+				err := r.cache.Set(ns.NSDName, class, t, adrr, adrr.Header().TTL)
 				if err != nil {
 					// TODO (Techassi): Handle error
 					fmt.Println(err)

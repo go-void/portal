@@ -7,37 +7,40 @@ import (
 
 	"github.com/go-void/portal/pkg/cache"
 	"github.com/go-void/portal/pkg/client"
+	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 )
 
 type ForwardingResolver struct {
-	// Client is a DNS client which sends queries to
+	// client is a DNS client which sends queries to
 	// external DNS servers
-	Client client.Client
+	client client.Client
 
-	// Upstream is a IP address of a upstream DNS
+	// upstream is a IP address of a upstream DNS
 	// server
-	Upstream net.IP
+	upstream net.IP
 
-	MaxExpired int
+	maxExpired int
 
-	Cache cache.Cache
+	cache  cache.Cache
+	logger *logger.Logger
 }
 
 // NewForwardingResolver returns a new forwarding resolver
-func NewForwardingResolver(upstream net.IP, c cache.Cache) *ForwardingResolver {
+func NewForwardingResolver(upstream net.IP, c cache.Cache, l *logger.Logger) *ForwardingResolver {
 	return &ForwardingResolver{
-		Client:     client.NewDefault(),
-		Upstream:   upstream,
-		MaxExpired: 300,
-		Cache:      c,
+		client:     client.NewDefault(),
+		upstream:   upstream,
+		maxExpired: 300,
+		cache:      c,
+		logger:     l,
 	}
 }
 
 // Resolve resolves a query by forwarding it to the upstream DNS server
 func (r *ForwardingResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
-	entry, status, err := r.Cache.Lookup(name, class, t)
+	entry, status, err := r.cache.Lookup(name, class, t)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -47,7 +50,7 @@ func (r *ForwardingResolver) Resolve(name string, class, t uint16) (rr.RR, error
 	}
 
 	if status == cache.Expired {
-		max := entry.Expire.Add(time.Duration(r.MaxExpired) * time.Second)
+		max := entry.Expire.Add(time.Duration(r.maxExpired) * time.Second)
 		if max.After(time.Now()) {
 			go r.Refresh(name, class, t)
 			return entry.Record, nil
@@ -59,7 +62,7 @@ func (r *ForwardingResolver) Resolve(name string, class, t uint16) (rr.RR, error
 		return nil, err
 	}
 
-	err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+	err = r.cache.Set(name, class, t, response, response.Header().TTL)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -72,7 +75,7 @@ func (r *ForwardingResolver) ResolveQuestion(question dns.Question) (rr.RR, erro
 }
 
 func (r *ForwardingResolver) Lookup(name string, class, t uint16) (rr.RR, error) {
-	response, err := r.Client.Query(name, class, t, r.Upstream)
+	response, err := r.client.Query(name, class, t, r.upstream)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +94,7 @@ func (r *ForwardingResolver) Refresh(name string, class, t uint16) {
 		return
 	}
 
-	err = r.Cache.Set(name, class, t, response, response.Header().TTL)
+	err = r.cache.Set(name, class, t, response, response.Header().TTL)
 	if err != nil {
 		// NOTE (Techassi): Log this
 	}
