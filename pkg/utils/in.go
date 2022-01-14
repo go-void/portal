@@ -9,3 +9,8 @@ func In(s string, search []string) bool {
 	}
 	return false
 }
+
+// NotIn returns if s is not in search
+func NotIn(s string, search []string) bool {
+	return !In(s, search)
+}
