@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/tree"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
@@ -32,12 +33,15 @@ type Cache interface {
 // RRs in an in-memory tree
 type DefaultCache struct {
 	*tree.Tree
+
+	logger *logger.Logger
 }
 
 // NewDefaultCache returns a new default in-memory tree cache
-func NewDefaultCache() *DefaultCache {
+func NewDefaultCache(l *logger.Logger) *DefaultCache {
 	return &DefaultCache{
-		Tree: tree.New(),
+		Tree:   tree.New(),
+		logger: l,
 	}
 }
 

@@ -5,7 +5,10 @@ import (
 	"errors"
 	"net"
 
+	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/types/dns"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -23,10 +26,14 @@ type Engine interface {
 type DefaultEngine struct {
 	ipToFilter map[*net.IP]int
 	filters    []Filter
+	logger     *logger.Logger
 }
 
-func NewEngine() Engine {
-	return &DefaultEngine{}
+func NewDefaultEngine(l *logger.Logger) Engine {
+	return &DefaultEngine{
+		ipToFilter: make(map[*net.IP]int),
+		logger:     l,
+	}
 }
 
 func (e *DefaultEngine) AddFilter(f Filter) error {
@@ -41,6 +48,10 @@ func (e *DefaultEngine) GetFilter(*net.IP) (*Filter, error) {
 func (e *DefaultEngine) Match(ip net.IP, message dns.Message) (bool, dns.Message, error) {
 	filter, err := e.GetFilter(&ip)
 	if err != nil {
+		e.logger.Debug(logger.DebugNoSuchFilter,
+			zap.String("context", "filter"),
+			zap.Error(err),
+		)
 		return false, message, nil
 	}
 

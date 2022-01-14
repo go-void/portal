@@ -56,6 +56,11 @@ type Server struct {
 	// listens for incoming UDP messages
 	UDPListener *net.UDPConn
 
+	// Logger is a light-weight wrapper around zap.Logger which
+	// allows to the server (and all sub-components) to write
+	// structured and leveled logs to one or multiple files
+	Logger *logger.Logger
+
 	// Reader implements the Reader interface to read
 	// incoming TCP and UDP messages
 	Reader dio.Reader
@@ -97,11 +102,6 @@ type Server struct {
 	// Collector implements the Collector interface to collect
 	// query logs
 	Collector collector.Collector
-
-	// Logger is a light-weight wrapper around zap.Logger which
-	// allows to the server (and all sub-components) to write
-	// structured and leveled logs to one or multiple files
-	Logger *logger.Logger
 
 	// UDPMessageSize is the default message size to create
 	// the temporary slice of bytes within the messageList
@@ -234,15 +234,19 @@ func (s *Server) Configure(opts ...OptionsFunc) error {
 // expects a validated config.Config
 func (s *Server) Defaults() {
 	if s.Filter == nil {
-		s.Filter = filter.NewEngine()
+		s.Filter = filter.NewDefaultEngine(s.Logger)
 	}
 
 	if s.Cache == nil {
-		s.Cache = cache.NewDefaultCache()
+		s.Cache = cache.NewDefaultCache(s.Logger)
 	}
 
 	if s.Resolver == nil {
-		s.Resolver = resolver.New(s.config.Resolver, s.Cache)
+		s.Resolver = resolver.New(
+			s.config.Resolver,
+			s.Cache,
+			s.Logger,
+		)
 	}
 
 	if s.Collector == nil {

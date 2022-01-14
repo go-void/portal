@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-void/portal/pkg/cache"
 	"github.com/go-void/portal/pkg/config"
+	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 )
@@ -44,14 +45,14 @@ type ResolveChain struct {
 	// Links []Link
 }
 
-func New(cfg config.ResolverOptions, c cache.Cache) Resolver {
+func New(cfg config.ResolverOptions, c cache.Cache, l *logger.Logger) Resolver {
 	switch cfg.Mode {
 	case "r":
-		return NewRecursiveResolver(cfg, c)
+		return NewRecursiveResolver(cfg, c, l)
 	case "i":
 		return NewIterativeResolver()
 	case "f":
-		return NewForwardingResolver(cfg.Upstream, c)
+		return NewForwardingResolver(cfg.Upstream, c, l)
 	}
 	return nil
 }

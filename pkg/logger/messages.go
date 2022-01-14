@@ -7,6 +7,7 @@ const (
 	ErrPackDNSMessage   = "failed to pack DNS message"
 	ErrAcceptMessage    = "did not accept DNS message"
 	ErrHandleRequest    = "failed to handle incoming DNS request"
+	ErrResolverLookup   = "failed to lookup domain name via resolver"
 )
 
 // UDP related log messages
@@ -22,4 +23,9 @@ const (
 	ErrTCPRead       = "failed to read TCP packet"
 	ErrTCPWrite      = "failed to write TCP packet"
 	ErrTCPWriteClose = "failed to write packet or close TCP conn"
+)
+
+// Filter related log messages
+const (
+	DebugNoSuchFilter = "no matching filter found"
 )
