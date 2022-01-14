@@ -16,5 +16,5 @@ portal
 # vendor/
 
 blocklist.txt
-_gen_rrs.go
 root.hints
+local.toml

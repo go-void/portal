@@ -1,0 +1,28 @@
+[server]
+cache_anabled = true
+address = "127.0.0.1"
+network = "udp"
+port = 53
+
+[resolver]
+cache_anabled = true
+mode = "r"
+hint_path = ""
+max_expire = 300
+
+[filter]
+ttl = 0
+mode = "null"
+
+[collector]
+max_entries = 1000
+anonymize = false
+interval = 900
+enabled = true
+backend = "default"
+
+[log]
+enabled = true
+mode = "prod"
+level = "error"
+outputs = ["stdout"]

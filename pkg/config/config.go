@@ -3,9 +3,12 @@ package config
 import (
 	"errors"
 	"net"
+	"os"
 
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/utils"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 var (
@@ -13,11 +16,13 @@ var (
 	ErrInvalidCollectorBackend = errors.New("invalid collector backend")
 	ErrInvalidServerAddress    = errors.New("invalid server address")
 	ErrInvalidServerNetwork    = errors.New("invalid network")
-	ErrInvalidResolverMode     = errors.New("no such resolver mode")
+	ErrInvalidResolverMode     = errors.New("invalid resolver mode")
+	ErrInvalidLogMode          = errors.New("invalid log mode")
 )
 
 // NOTE (Techassi): Can we define the options in the packages itself?
 
+// Config specifies the global configuration options
 type Config struct {
 	Collector CollectorOptions `toml:"collector"`
 	Resolver  ResolverOptions  `toml:"resolver"`
@@ -26,6 +31,7 @@ type Config struct {
 	Log       LogOptions       `toml:"log"`
 }
 
+// CollectorOptions specifies available collector config options
 type CollectorOptions struct {
 	MaxEntries int    `toml:"max_entries"`
 	Anonymize  bool   `toml:"anonymize"`
@@ -34,6 +40,7 @@ type CollectorOptions struct {
 	Backend    string `toml:"backend"`
 }
 
+// ResolverOptions specifies available resolver config options
 type ResolverOptions struct {
 	CacheEnabled bool   `toml:"cache_enabled"`
 	RawUpstream  string `toml:"upstream"`
@@ -43,11 +50,13 @@ type ResolverOptions struct {
 	Mode         string `toml:"mode"`
 }
 
+// FilterOptions specifies available filter config options
 type FilterOptions struct {
 	TTL  int    `toml:"ttl"`
 	Mode string `toml:"mode"`
 }
 
+// ServerOptions specifies available server config options
 type ServerOptions struct {
 	CacheEnabled bool   `toml:"cache_enabled"`
 	RawAddress   string `toml:"address"`
@@ -56,10 +65,39 @@ type ServerOptions struct {
 	Port         int    `toml:"port"`
 }
 
+// LogOptions specifies available log config options
 type LogOptions struct {
+	Enabled bool     `toml:"enabled"`
 	Mode    string   `toml:"mode"`
 	Level   string   `toml:"level"`
 	Outputs []string `toml:"outputs"`
+}
+
+// Read reads a TOML config file and returns a Config or any error encountered
+// while reading
+func Read(path string) (*Config, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	c := new(Config)
+	d := toml.NewDecoder(f)
+
+	err = d.Decode(c)
+	return c, err
+}
+
+// Write writes a TOML config to path and returns any error encountered while
+// writing
+func Write(path string, c *Config) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
+	e := toml.NewEncoder(f)
+	return e.Encode(c)
 }
 
 // Default returns a config with default values
@@ -89,6 +127,7 @@ func Default() *Config {
 			Backend:    "default",
 		},
 		Log: LogOptions{
+			Enabled: true,
 			Mode:    "production",
 			Level:   "error",
 			Outputs: []string{"stdout"},
@@ -103,11 +142,11 @@ func (c *Config) Validate() error {
 	}
 	c.Server.Address = aip
 
-	if !utils.In(c.Server.Network, []string{"udp", "udp4", "udp6", "tcp", "tcp4", "tcp6"}) {
+	if utils.NotIn(c.Server.Network, []string{"udp", "udp4", "udp6", "tcp", "tcp4", "tcp6"}) {
 		return ErrInvalidServerNetwork
 	}
 
-	if !utils.In(c.Resolver.Mode, []string{"r", "i", "f"}) {
+	if utils.NotIn(c.Resolver.Mode, []string{"r", "i", "f"}) {
 		return ErrInvalidResolverMode
 	}
 
@@ -119,8 +158,12 @@ func (c *Config) Validate() error {
 		c.Resolver.Upstream = uip
 	}
 
-	if c.Collector.Enabled && !utils.In(c.Collector.Backend, []string{"default", "mysql", "mariadb"}) {
+	if c.Collector.Enabled && utils.NotIn(c.Collector.Backend, []string{"default", "mysql", "mariadb"}) {
 		return ErrInvalidCollectorBackend
+	}
+
+	if c.Log.Enabled && utils.NotIn(c.Log.Mode, []string{"", "dev", "development", "prod", "production"}) {
+		return ErrInvalidLogMode
 	}
 
 	return nil
@@ -137,5 +180,13 @@ func (c *Config) Defaults() {
 
 	if c.Collector.Interval <= 0 {
 		c.Collector.Interval = constants.CollectorDefaultInterval
+	}
+
+	if c.Log.Level == "" {
+		c.Log.Level = "error"
+	}
+
+	if len(c.Log.Outputs) == 0 {
+		c.Log.Outputs = []string{"stderr"}
 	}
 }
