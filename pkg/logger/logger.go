@@ -31,6 +31,13 @@ type Logger struct {
 }
 
 func New(c config.LogOptions) (*Logger, error) {
+	if !c.Enabled {
+		return &Logger{
+			Logger: zap.NewNop(),
+			closer: func() {},
+		}, nil
+	}
+
 	ws, closer, err := zap.Open(c.Outputs...)
 	if err != nil {
 		return nil, err
