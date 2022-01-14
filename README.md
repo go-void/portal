@@ -7,14 +7,13 @@ block) DNS queries.
 
 ### General
 
-- At which level should we log and how do we pass the logger around in the best / most efficient way?
-- How should we collect metrics / statistics which can be shown in the web interface of void?
-- Implement mechanism to return FORMERR when unpacking a message (prior to handling). Maybe move the unpacking into the
+- [WIP] How should we collect metrics / statistics which can be shown in the web interface of void?
+- [TODO] Implement mechanism to return FORMERR when unpacking a message (prior to handling). Maybe move the unpacking into the
   handling func to be able to handle these kind of errors better and in a centralized place. (See OPT record)
-- Figure out a way to handle EDNS Options with access to some core components like cache, etc.
-- Adjust resolver API to allow return of multiple answer records
+- [TODO] Figure out a way to handle EDNS Options with access to some core components like cache, etc.
+- [TODO] Adjust resolver API to allow return of multiple answer records
 
-#### Caching 
+### Caching 
 
 We need to support lookup of partial domain names: We currently do the following:
 
@@ -68,24 +67,39 @@ import (
 )
 
 func main() {
+    // Setup config
+    c, err := config.Read("path/to/config.toml")
+    if err != nil {
+        exit(err)
+    }
+
+    // Validate config
+    err = c.Validate()
+    if err != nil {
+        exit(err)
+    }
+
     // Create new server
-    s := server.New(&config.Config{})
+    s := server.New(c)
 
     // Optionally provide custom implementations for different components via
-    err := s.Configure()
+    err = s.Configure()
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        exit(err)
     }
 
     // Run the server
     err = s.Run()
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        exit(err)
     }
 
     // This blocks until the server is shutdown
     s.Wait()
+}
+
+func exit(err error) {
+    fmt.Println(err)
+    os.Exit(1)
 }
 ```
