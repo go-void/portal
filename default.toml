@@ -1,11 +1,11 @@
 [server]
-cache_anabled = true
+cache_enabled = true
 address = "127.0.0.1"
 network = "udp"
 port = 53
 
 [resolver]
-cache_anabled = true
+cache_enabled = true
 mode = "r"
 hint_path = ""
 max_expire = 300
