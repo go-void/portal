@@ -1,5 +1,7 @@
 # Portal
 
+⚠️ Under active development!
+
 Portal is a domain name server written in Go. Portal is used by [Void](https://github.com/go-void/void) to answer (and
 block) DNS queries.
 
