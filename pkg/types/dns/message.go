@@ -23,8 +23,8 @@ type Message struct {
 	Compression CompressionMap
 }
 
-func NewMessage() Message {
-	return Message{
+func NewMessage() *Message {
+	return &Message{
 		Compression: NewCompressionMap(),
 	}
 }

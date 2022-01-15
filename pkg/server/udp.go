@@ -55,7 +55,7 @@ func (s *Server) serveUDP() {
 }
 
 // handleUDP handles name matching and returns a response message via UDP
-func (s *Server) handleUDP(message dns.Message, session dns.Session) {
+func (s *Server) handleUDP(message *dns.Message, session dns.Session) {
 	message, err := s.handle(message, session.Address.IP)
 	if err != nil {
 		s.Logger.Error(logger.ErrHandleRequest,
@@ -82,7 +82,7 @@ func (s *Server) readUDP() ([]byte, dns.Session, error) {
 
 // writeUDP packs a DNS message and writes it back to the requesting DNS client
 // via UDP
-func (s *Server) writeUDP(message dns.Message, session dns.Session) {
+func (s *Server) writeUDP(message *dns.Message, session dns.Session) {
 	defer s.conns.Done()
 
 	b, err := s.Packer.Pack(message)

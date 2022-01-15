@@ -62,7 +62,7 @@ func (s *Server) serveTCP() {
 }
 
 // handleTCP handles name matching and returns a response message via TCP
-func (s *Server) handleTCP(message dns.Message, conn *net.TCPConn) {
+func (s *Server) handleTCP(message *dns.Message, conn *net.TCPConn) {
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	message, err := s.handle(message, addr.IP)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *Server) handleTCP(message dns.Message, conn *net.TCPConn) {
 }
 
 // writeTCP packs a DNS message and writes it back to the requesting DNS client via TCP
-func (s *Server) writeTCP(message dns.Message, conn *net.TCPConn) {
+func (s *Server) writeTCP(message *dns.Message, conn *net.TCPConn) {
 	defer s.conns.Done()
 
 	b, err := s.Packer.Pack(message)

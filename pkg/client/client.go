@@ -32,16 +32,16 @@ type Client interface {
 	// Query sends a DNS query for 'name' with 'class' and 'type'
 	// to the remote DNS server with 'ip' and returns the answer
 	// message and any encountered error
-	Query(string, uint16, uint16, net.IP) (dns.Message, error)
+	Query(string, uint16, uint16, net.IP) (*dns.Message, error)
 
 	// QueryUDP sends a DNS query using UDP
-	QueryUDP(dns.Message, net.IP) (dns.Message, error)
+	QueryUDP(*dns.Message, net.IP) (*dns.Message, error)
 
 	// QueryTCP sends a DNS query using TCP
-	QueryTCP(dns.Message, net.IP) (dns.Message, error)
+	QueryTCP(*dns.Message, net.IP) (*dns.Message, error)
 
 	// CreateMessage returns a new DNS message
-	CreateMessage(dns.Header) dns.Message
+	CreateMessage(dns.Header) *dns.Message
 
 	// CreateHeader returns a new DNS message header
 	// with sensible client defaults
@@ -126,7 +126,7 @@ func (c *DefaultClient) Dial(network string, ip net.IP) (net.Conn, error) {
 
 // Query sends a DNS query for 'name' with 'class' and 'type' to the remote DNS server with 'ip'
 // and returns the answer message and any encountered error
-func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (dns.Message, error) {
+func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (*dns.Message, error) {
 	header := c.CreateHeader()
 	query := c.CreateMessage(header)
 
@@ -141,28 +141,28 @@ func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (dns.Mess
 		return c.QueryUDP(query, ip)
 	}
 
-	return dns.Message{}, ErrInvalidNetwork
+	return nil, ErrInvalidNetwork
 }
 
 // QueryUDP sends a DNS 'query' to a remote DNS server with 'ip' using UDP
-func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, error) {
+func (c *DefaultClient) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, error) {
 	// Establish UDP connection
 	conn, err := c.Dial(c.Network, ip)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 	defer conn.Close()
 
 	// Pack DNS message into wire format
 	b, err := c.Packer.Pack(query)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 
 	// Send query to remote DNS server
 	_, err = conn.Write(b)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 
 	// Read answer of the remote DNS server
@@ -170,17 +170,17 @@ func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, err
 	udpConn := conn.(*net.UDPConn)
 	_, _, err = c.Reader.ReadUDP(udpConn, buf)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 
 	// Unpack header data
 	header, offset, err := c.Unpacker.UnpackHeader(buf)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 
 	if query.Header.ID != header.ID {
-		return dns.Message{}, ErrNoMatchHeaderID
+		return nil, ErrNoMatchHeaderID
 	}
 
 	// Unpack remaining message data
@@ -188,30 +188,30 @@ func (c *DefaultClient) QueryUDP(query dns.Message, ip net.IP) (dns.Message, err
 }
 
 // QueryTCP sends a DNS 'query' to target DNS server with 'ip' using TCP
-func (c *DefaultClient) QueryTCP(query dns.Message, ip net.IP) (dns.Message, error) {
+func (c *DefaultClient) QueryTCP(query *dns.Message, ip net.IP) (*dns.Message, error) {
 	conn, err := c.Dial(c.Network, ip)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 	defer conn.Close()
 
 	b, err := c.Packer.Pack(query)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 
 	tcpConn := conn.(*net.TCPConn)
 	err = c.Writer.WriteTCPClose(tcpConn, b)
 	if err != nil {
-		return dns.Message{}, err
+		return nil, err
 	}
 
-	return dns.Message{}, nil
+	return nil, nil
 }
 
 // CreateMessage creates a new DNS message with a header
-func (c *DefaultClient) CreateMessage(header dns.Header) dns.Message {
-	return dns.Message{
+func (c *DefaultClient) CreateMessage(header dns.Header) *dns.Message {
+	return &dns.Message{
 		Header: header,
 	}
 }

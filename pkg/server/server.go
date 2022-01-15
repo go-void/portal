@@ -279,7 +279,7 @@ func (s *Server) Defaults() {
 }
 
 // handle handles name matching and returns a response message
-func (s *Server) handle(message dns.Message, ip net.IP) (dns.Message, error) {
+func (s *Server) handle(message *dns.Message, ip net.IP) (*dns.Message, error) {
 	start := time.Now()
 
 	s.Logger.Debug("handle incoming DNS request",

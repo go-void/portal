@@ -11,7 +11,7 @@ import (
 type Packer interface {
 	// Packs packs a single DNS message by converting
 	// the provided message to the wire format
-	Pack(dns.Message) ([]byte, error)
+	Pack(*dns.Message) ([]byte, error)
 
 	// PackHeader packs header data by converting
 	// the provided header to the wire format
@@ -48,7 +48,7 @@ func NewDefaultPacker() Packer {
 
 // Packs packs a single DNS message by converting the provided
 // message to the wire format
-func (p *DefaultPacker) Pack(message dns.Message) ([]byte, error) {
+func (p *DefaultPacker) Pack(message *dns.Message) ([]byte, error) {
 	// FIXME (Techassi): Figure out how we can pre-allocate the buf with the correct length / size
 	var buf = make([]byte, 256*4)
 

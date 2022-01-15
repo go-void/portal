@@ -18,7 +18,7 @@ var (
 type Unpacker interface {
 	// Unpack unpacks a single complete DNS message from the
 	// received byte slice
-	Unpack(dns.Header, []byte, int) (dns.Message, error)
+	Unpack(dns.Header, []byte, int) (*dns.Message, error)
 
 	// UnpackHeader unpacks header data from the received
 	// byte slice
@@ -56,7 +56,7 @@ func NewDefaultUnpacker() Unpacker {
 }
 
 // Unpack unpacks a single complete DNS message from the received byte slice
-func (p *DefaultUnpacker) Unpack(header dns.Header, data []byte, offset int) (dns.Message, error) {
+func (p *DefaultUnpacker) Unpack(header dns.Header, data []byte, offset int) (*dns.Message, error) {
 	m := dns.NewMessage()
 	m.Header = header
 
