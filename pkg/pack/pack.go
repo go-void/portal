@@ -45,11 +45,11 @@ func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
 		return offset + 4, nil
 	}
 
-	i := binary.BigEndian.Uint64(ip[:32])
+	i := binary.BigEndian.Uint64(ip[:8])
 	binary.BigEndian.PutUint64(buf[offset:], i)
 	offset += 8
 
-	i = binary.BigEndian.Uint64(ip[32:])
+	i = binary.BigEndian.Uint64(ip[8:])
 	binary.BigEndian.PutUint64(buf[offset:], i)
 
 	return offset + 8, nil
