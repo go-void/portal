@@ -65,6 +65,9 @@ type Header struct {
 
 	// RDLength specifies the length of RDATA in octets
 	RDLength uint16
+
+	// Additional Expires field. This helps to more easily handle cached records
+	Expires int64
 }
 
 // New returns a new RR based on the provided type

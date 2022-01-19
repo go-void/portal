@@ -39,23 +39,24 @@ func NewForwardingResolver(upstream net.IP, c cache.Cache, l *logger.Logger) *Fo
 }
 
 // Resolve resolves a query by forwarding it to the upstream DNS server
-func (r *ForwardingResolver) Resolve(name string, class, t uint16) (rr.RR, error) {
+func (r *ForwardingResolver) Resolve(name string, class, t uint16) ([]rr.RR, error) {
 	entry, status, err := r.cache.Lookup(name, class, t)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	if status == cache.Hit {
-		return entry.Record, nil
+		return entry, nil
 	}
 
-	if status == cache.Expired {
-		max := entry.Expire.Add(time.Duration(r.maxExpired) * time.Second)
-		if max.After(time.Now()) {
-			go r.Refresh(name, class, t)
-			return entry.Record, nil
-		}
-	}
+	// TODO (Techassi): Redo this
+	// if status == cache.Expired {
+	// 	max := entry.Expire.Add(time.Duration(r.maxExpired) * time.Second)
+	// 	if max.After(time.Now()) {
+	// 		go r.Refresh(name, class, t)
+	// 		return entry.Record, true
+	// 	}
+	// }
 
 	response, err := r.Lookup(name, class, t)
 	if err != nil {
@@ -74,7 +75,7 @@ func (r *ForwardingResolver) ResolveQuestion(question dns.Question) (rr.RR, erro
 	return r.Resolve(question.Name, question.Class, question.Type)
 }
 
-func (r *ForwardingResolver) Lookup(name string, class, t uint16) (rr.RR, error) {
+func (r *ForwardingResolver) Lookup(name string, class, t uint16) ([]rr.RR, error) {
 	response, err := r.client.Query(name, class, t, r.upstream)
 	if err != nil {
 		return nil, err

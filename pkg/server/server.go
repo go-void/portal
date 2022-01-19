@@ -17,9 +17,7 @@ import (
 	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/resolver"
 	"github.com/go-void/portal/pkg/store"
-	"github.com/go-void/portal/pkg/tree"
 	"github.com/go-void/portal/pkg/types/dns"
-	"github.com/go-void/portal/pkg/types/rr"
 
 	"go.uber.org/zap"
 	"golang.org/x/net/ipv4"
@@ -136,6 +134,9 @@ type Server struct {
 	// This indicates if the server / store is using a cache
 	cacheEnabled bool
 
+	// This indicates if the server is resolving queries recursivly
+	recursive bool
+
 	config *config.Config
 }
 
@@ -147,6 +148,7 @@ func New(cfg *config.Config) *Server {
 		Network:        cfg.Server.Network,
 		Port:           cfg.Server.Port,
 		cacheEnabled:   cfg.Server.CacheEnabled,
+		recursive:      cfg.Resolver.Mode == "r",
 		conns:          sync.WaitGroup{},
 		wg:             sync.WaitGroup{},
 		messageList:    sync.Pool{},
@@ -302,52 +304,52 @@ func (s *Server) handle(message *dns.Message, ip net.IP) (*dns.Message, error) {
 	// TODO (Techassi): Add support for ANY queries, see RFC 8482
 	var err error
 
-	filtered, message, err := s.Filter.Match(ip, message)
-	if err != nil {
-		// FIXME (Techassi): How whould we handle a filter error? Should we abort or continue (and answer the query)
-		s.Logger.Error("failed to match filter",
-			zap.String("context", "server"),
-			zap.String("address", ip.String()),
-			zap.Object("message", message),
-			zap.Error(err),
-		)
+	// filtered, message, err := s.Filter.Match(ip, message)
+	// if err != nil {
+	// 	// FIXME (Techassi): How whould we handle a filter error? Should we abort or continue (and answer the query)
+	// 	s.Logger.Error("failed to match filter",
+	// 		zap.String("context", "server"),
+	// 		zap.String("address", ip.String()),
+	// 		zap.Object("message", message),
+	// 		zap.Error(err),
+	// 	)
 
+	// 	return message, err
+	// }
+
+	// if filtered {
+	// 	end := time.Since(start)
+	// 	entry := collector.NewFilteredEntry(message.Question[0], message.Answer[0], end, ip)
+	// 	go s.Collector.AddEntry(entry)
+
+	// 	return message, nil
+	// }
+
+	if s.cacheEnabled {
+		records, status, err := s.Cache.LookupQuestion(message.Question[0])
+
+		if err != nil {
+			return message, err
+		}
+
+		if status == cache.Hit {
+			message.AddAnswers(records)
+			return message, nil
+		}
+
+	}
+
+	// Check for custom records at this point
+
+	result, err := s.Resolver.Resolve(message)
+	if err != nil {
 		return message, err
 	}
 
-	if filtered {
-		end := time.Since(start)
-		entry := collector.NewFilteredEntry(message.Question[0], message.Answer[0], end, ip)
-		go s.Collector.AddEntry(entry)
-
-		return message, nil
-	}
-
-	// TODO (Techassi): Clean this up. Is there a more elegant solution?
-	var status cache.Status
-	var entry tree.Entry
-	var record rr.RR
-
-	if s.cacheEnabled {
-		entry, status, err = s.Cache.LookupQuestion(message.Question[0])
-		record = entry.Record
-	}
-
-	// TODO (Techassi): Also check if we have any custom records
-	if status != cache.Hit || !s.cacheEnabled {
-		record, err = s.RecordStore.GetFromQuestion(message.Question[0])
-	}
-
-	if err != nil {
-		record, err = s.Resolver.ResolveQuestion(message.Question[0])
-		if err != nil && !errors.Is(err, resolver.ErrNoAnswer) {
-			return message, err
-		}
-	}
-
-	message.AddAnswer(record)
+	// Finalize response
+	message.AddRecords(result.Answer, result.Authority, result.Additional)
 	message.SetIsResponse()
-	message.SetRecursionAvailable(true)
+	message.SetRecursionAvailable(s.recursive)
 
 	end := time.Since(start)
 	centry := collector.NewEntry(message.Question[0], message.Answer[0], end, ip)

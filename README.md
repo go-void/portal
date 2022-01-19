@@ -5,6 +5,16 @@
 Portal is a domain name server written in Go. Portal is used by [Void](https://github.com/go-void/void) to answer (and
 block) DNS queries.
 
+## Features
+
+- Recursion and Forwarding (Iterative in progress)
+- Caching and auto renewing of RRs
+- Filter engine (in progress)
+- Custom RRs
+- Structured logging
+- Metrics collection
+- ...
+
 ## TODOs
 
 ### General
@@ -13,9 +23,10 @@ block) DNS queries.
 - [TODO] Implement mechanism to return FORMERR when unpacking a message (prior to handling). Maybe move the unpacking into the
   handling func to be able to handle these kind of errors better and in a centralized place. (See OPT record)
 - [TODO] Figure out a way to handle EDNS Options with access to some core components like cache, etc.
-- [TODO] Adjust resolver API to allow return of multiple answer records
 
-### Caching 
+### Caching
+
+#### Partial lookup
 
 We need to support lookup of partial domain names: We currently do the following:
 
@@ -25,6 +36,15 @@ We need to support lookup of partial domain names: We currently do the following
 If we recursively resolve a domain name and encounter a NS record without any glue records we always start to resolve
 the domain name of the NS record from root (.). Instead we should lookup the cache if we have partial stored records of
 NS RRs.
+
+#### Multiple records
+
+A single node at `domain-name` should support multiple RRs at `class` and `type`. This feature comes with many
+implications:
+
+- Which of these RRs do we return when looking up the node: All of them or only one? And if only one - which one?
+- How do we calculate the Expiry / TTl when we return multiple RRs?
+- More?
 
 ### RFCs
 

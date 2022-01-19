@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"time"
 
 	"github.com/go-void/portal/pkg/pack"
 	"github.com/go-void/portal/pkg/types/dns"
@@ -215,5 +216,7 @@ func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.Header, in
 	rdlength, offset := pack.UnpackUint16(data, offset)
 	header.RDLength = rdlength
 
+	// NOTE (Techassi): Keep an eye out for time.Now() performance
+	header.Expires = time.Now().Unix() + int64(rrTTL)
 	return header, offset
 }

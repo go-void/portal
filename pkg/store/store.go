@@ -2,24 +2,22 @@
 package store
 
 import (
-	"time"
-
 	"github.com/go-void/portal/pkg/tree"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/rr"
 )
 
 type Store interface {
-	// GetFromQuestion returns a record by name and the selected type's data.
+	// GetFromQuestion returns records by name and the selected type's data.
 	// Example: example.com with type A would return 93.184.216.34
-	GetFromQuestion(dns.Question) (rr.RR, error)
+	GetFromQuestion(dns.Question) ([]rr.RR, error)
 
-	// Add adds a new resource record to the store
-	Add(string, uint16, uint16, rr.RR, uint32) error
+	// Add adds a new resource records to the store
+	Add(string, uint16, uint16, []rr.RR, uint32) error
 
-	// Get returns a record by name and the selected type's data.
+	// Get returns records by name and the selected type's data.
 	// Example: example.com with type A would return 93.184.216.34
-	Get(string, uint16, uint16) (rr.RR, error)
+	Get(string, uint16, uint16) ([]rr.RR, error)
 }
 
 // DefaultStore implements a default store based on a in-memory tree structure
@@ -35,45 +33,43 @@ func NewDefault() *DefaultStore {
 
 // GetFromQuestion returns a record by name and the selected type's data.
 // Example: example.com with type A would return 93.184.216.34
-func (s *DefaultStore) GetFromQuestion(question dns.Question) (rr.RR, error) {
+func (s *DefaultStore) GetFromQuestion(question dns.Question) ([]rr.RR, error) {
 	node, err := s.Tree.Get(question.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	nodeRecord, err := node.Entry(question.Class, question.Type)
+	records, err := node.Entry(question.Class, question.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	return nodeRecord.Record, err
+	return records, err
 }
 
 // Add adds a new resource record to the store
-func (s *DefaultStore) Add(name string, class, t uint16, record rr.RR, ttl uint32) error {
+func (s *DefaultStore) Add(name string, class, t uint16, records []rr.RR, ttl uint32) error {
 	node, err := s.Tree.Populate(name)
 	if err != nil {
 		return tree.ErrNodeNotFound
 	}
 
-	expire := time.Now().Add(time.Duration(ttl) * time.Second)
-	node.SetEntry(class, t, record, expire)
-
+	node.SetEntry(class, t, records)
 	return nil
 }
 
 // Get returns a record by name and the selected type's data.
 // Example: example.com with type A would return 93.184.216.34
-func (s *DefaultStore) Get(name string, class, t uint16) (rr.RR, error) {
+func (s *DefaultStore) Get(name string, class, t uint16) ([]rr.RR, error) {
 	node, err := s.Tree.Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	nodeRecord, err := node.Entry(class, t)
+	records, err := node.Entry(class, t)
 	if err != nil {
 		return nil, err
 	}
 
-	return nodeRecord.Record, err
+	return records, err
 }

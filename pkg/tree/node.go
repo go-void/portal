@@ -1,20 +1,13 @@
 package tree
 
 import (
-	"time"
-
 	"github.com/go-void/portal/pkg/types/rr"
 )
 
 type Node struct {
 	parent   *Node
 	children map[string]Node
-	entries  map[uint16]Entry
-}
-
-type Entry struct {
-	Record rr.RR
-	Expire time.Time
+	records  map[uint16][]rr.RR
 }
 
 // Parent returns this node's parent node
@@ -40,17 +33,14 @@ func (n *Node) AddChild(name string, child Node) error {
 }
 
 // Record returns a stored record with class and type
-func (n *Node) Entry(class, t uint16) (Entry, error) {
-	if entry, ok := n.entries[class*100+t]; ok {
+func (n *Node) Entry(class, t uint16) ([]rr.RR, error) {
+	if entry, ok := n.records[class*100+t]; ok {
 		return entry, nil
 	}
-	return Entry{}, ErrNoSuchData
+	return nil, ErrNoSuchData
 }
 
 // SetEntry sets data for type t
-func (n *Node) SetEntry(class, t uint16, record rr.RR, expire time.Time) {
-	n.entries[class*100+t] = Entry{
-		Expire: expire,
-		Record: record,
-	}
+func (n *Node) SetEntry(class, t uint16, records []rr.RR) {
+	n.records[class*100+t] = records
 }

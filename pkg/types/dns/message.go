@@ -37,6 +37,17 @@ func (m *Message) SetRecursionAvailable(ra bool) {
 	m.Header.RecursionAvailable = m.Header.RecursionDesired && ra
 }
 
+func (m *Message) AddRecords(answer, authority, additional []rr.RR) {
+	m.Answer = append(m.Answer, answer...)
+	m.Header.ANCount += uint16(len(answer))
+
+	m.Authority = append(m.Authority, authority...)
+	m.Header.NSCount += uint16(len(authority))
+
+	m.Additional = append(m.Additional, additional...)
+	m.Header.ARCount += uint16(len(additional))
+}
+
 // AddQuestion adds a question to the question section
 // of a DNS message
 func (m *Message) AddQuestion(question Question) {
@@ -109,12 +120,28 @@ func (m *Message) Len() int {
 	return len
 }
 
+func (m *Message) Q() (string, uint16, uint16) {
+	return m.Question[0].Name, m.Question[0].Class, m.Question[0].Type
+}
+
 // IsEDNS returns if the message has an EDNS OPT record
 func (m *Message) IsEDNS() bool {
 	// We iterate from the back because the OPT RR is usually at the
 	// end of the additional records
 	for i := len(m.Additional) - 1; i >= 0; i-- {
 		if _, ok := m.Additional[i].(*rr.OPT); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// IsSOA returns if the message has a SOA record
+func (m *Message) IsSOA() bool {
+	// We iterate from the front because the SOA record is usually at the
+	// front of the additional records
+	for i := 0; i < len(m.Additional); i++ {
+		if _, ok := m.Additional[i].(*rr.SOA); ok {
 			return true
 		}
 	}

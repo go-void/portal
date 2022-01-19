@@ -56,9 +56,8 @@ func UnpackDomainName(data []byte, offset int) (string, int) {
 	var offsetBeforePtr = 0
 	var followed bool
 	var buf []byte
-	var done bool
 
-	for !done {
+	for done := false; !done; {
 		b := int(data[offset])
 		offset++
 

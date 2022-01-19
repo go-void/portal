@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/go-void/portal/pkg/labels"
+	"github.com/go-void/portal/pkg/types/rr"
 )
 
 var (
@@ -24,7 +25,7 @@ func New() *Tree {
 		root: Node{
 			parent:   nil,
 			children: make(map[string]Node),
-			entries:  make(map[uint16]Entry),
+			records:  make(map[uint16][]rr.RR),
 		},
 	}
 }
@@ -105,7 +106,7 @@ func (t *Tree) Populate(name string) (Node, error) {
 			node := Node{
 				parent:   &current,
 				children: make(map[string]Node),
-				entries:  make(map[uint16]Entry),
+				records:  make(map[uint16][]rr.RR),
 			}
 
 			err := current.AddChild(name, node)

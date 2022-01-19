@@ -7,7 +7,6 @@ import (
 	"github.com/go-void/portal/pkg/config"
 	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/types/dns"
-	"github.com/go-void/portal/pkg/types/rr"
 )
 
 var (
@@ -15,27 +14,23 @@ var (
 	ErrNoAnswer = errors.New("resolver: no answer")
 )
 
-// Resolver describes a DNS resolver which can resolve
-// DNS queries (of unknown / external names) iteratively
-// or recursively
+// TODO (Techassi): Rework resolver API to more easily add one or more RRs to any RR section
+
+// Resolver describes a DNS resolver which can resolve DNS queries (of
+// unknown / external names) iteratively or recursively
 type Resolver interface {
-	// Resolve resolves a query by first looking if
-	// there is a cached record and if not it will
-	// look up using remote DNS servers
-	Resolve(string, uint16, uint16) (rr.RR, error)
+	// Resolve resolves a query of a DNS message by first looking up the
+	// request in the cache and if not found will continue to lookup via
+	// the Lookup function
+	Resolve(*dns.Message) (Result, error)
 
-	// ResolveQuestion is a convenience function which
-	// allows to provide a DNS question instead of
-	// individual parameters
-	ResolveQuestion(dns.Question) (rr.RR, error)
+	ResolveRaw(string, uint16, uint16) (Result, error)
 
-	// Lookup looks up a query either iteratively,
-	// recursively or by forwarding it to a upstream
-	// DNS server
-	Lookup(string, uint16, uint16) (rr.RR, error)
+	// Lookup looks up a query either iteratively, recursively or by
+	// forwarding it to a upstream DNS server
+	Lookup(string, uint16, uint16) (Result, error)
 
-	// Refresh refreshes a cached record by looking
-	// it up again
+	// Refresh refreshes a cached record by looking it up again
 	Refresh(string, uint16, uint16)
 }
 
@@ -50,9 +45,9 @@ func New(cfg config.ResolverOptions, c cache.Cache, l *logger.Logger) Resolver {
 	case "r":
 		return NewRecursiveResolver(cfg, c, l)
 	case "i":
-		return NewIterativeResolver()
+		// return NewIterativeResolver()
 	case "f":
-		return NewForwardingResolver(cfg.Upstream, c, l)
+		// return NewForwardingResolver(cfg.Upstream, c, l)
 	}
 	return nil
 }
