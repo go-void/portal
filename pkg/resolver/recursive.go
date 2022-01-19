@@ -46,7 +46,7 @@ func NewRecursiveResolver(cfg config.ResolverOptions, c cache.Cache, l *logger.L
 	}
 
 	return &RecursiveResolver{
-		client:       client.NewDefault(),
+		client:       client.NewDefault(l),
 		hints:        hints,
 		cache:        c,
 		logger:       l,
@@ -79,7 +79,7 @@ func (r *RecursiveResolver) ResolveRaw(name string, class, t uint16) (Result, er
 
 	if r.cacheEnabled {
 		// TODO (Techassi): Figure out a simple, elegant and performant way of setting ALL records of result
-		err = r.cache.Set(name, class, t, result.Answer)
+		err = r.cache.Set(name, result.Answer)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -135,7 +135,7 @@ func (r *RecursiveResolver) Refresh(name string, class, t uint16) {
 		return
 	}
 
-	err = r.cache.Set(name, class, t, response.Answer)
+	err = r.cache.Set(name, response.Answer)
 	if err != nil {
 		// NOTE (Techassi): Log this
 	}

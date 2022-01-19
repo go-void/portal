@@ -23,7 +23,7 @@ type Cache interface {
 
 	LookupQuestion(dns.Question) ([]rr.RR, Status, error)
 
-	Set(string, uint16, uint16, []rr.RR) error
+	Set(string, []rr.RR) error
 }
 
 // DefaultCache implements the Cache interface and stores
@@ -50,7 +50,7 @@ func (c *DefaultCache) Lookup(name string, class, t uint16) ([]rr.RR, Status, er
 		return nil, Miss, nil
 	}
 
-	records, err := node.Entry(class, t)
+	records, err := node.Records(class, t)
 	if err != nil {
 		return nil, Miss, nil
 	}
@@ -72,12 +72,12 @@ func (c *DefaultCache) LookupQuestion(message dns.Question) ([]rr.RR, Status, er
 }
 
 // Set sets (or adds) a new cache entry
-func (c *DefaultCache) Set(name string, class, t uint16, records []rr.RR) error {
+func (c *DefaultCache) Set(name string, records []rr.RR) error {
 	node, err := c.Populate(name)
 	if err != nil {
 		return err
 	}
 
-	node.SetEntry(class, t, records)
+	node.AddRecords(records)
 	return nil
 }

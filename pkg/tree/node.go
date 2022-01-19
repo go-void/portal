@@ -33,14 +33,31 @@ func (n *Node) AddChild(name string, child Node) error {
 }
 
 // Record returns a stored record with class and type
-func (n *Node) Entry(class, t uint16) ([]rr.RR, error) {
+func (n *Node) Records(class, t uint16) ([]rr.RR, error) {
 	if entry, ok := n.records[class*100+t]; ok {
 		return entry, nil
 	}
 	return nil, ErrNoSuchData
 }
 
-// SetEntry sets data for type t
-func (n *Node) SetEntry(class, t uint16, records []rr.RR) {
-	n.records[class*100+t] = records
+// AddRecords adds records to this node
+func (n *Node) AddRecords(records []rr.RR) {
+	isSame := false
+
+	for i := 0; i < len(records); i++ {
+		key := records[i].Header().Class*100 + records[i].Header().Type
+
+		for j := 0; j < len(n.records[key]); j++ {
+			if records[i].IsSame(n.records[key][j]) {
+				isSame = true
+				break
+			}
+		}
+
+		if isSame {
+			continue
+		}
+
+		n.records[key] = append(n.records[key], records[i])
+	}
 }

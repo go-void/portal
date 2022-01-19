@@ -12,12 +12,12 @@ type Store interface {
 	// Example: example.com with type A would return 93.184.216.34
 	GetFromQuestion(dns.Question) ([]rr.RR, error)
 
-	// Add adds a new resource records to the store
-	Add(string, uint16, uint16, []rr.RR, uint32) error
-
 	// Get returns records by name and the selected type's data.
 	// Example: example.com with type A would return 93.184.216.34
 	Get(string, uint16, uint16) ([]rr.RR, error)
+
+	// Add adds a new resource records to the store
+	Add(string, []rr.RR) error
 }
 
 // DefaultStore implements a default store based on a in-memory tree structure
@@ -39,7 +39,7 @@ func (s *DefaultStore) GetFromQuestion(question dns.Question) ([]rr.RR, error) {
 		return nil, err
 	}
 
-	records, err := node.Entry(question.Class, question.Type)
+	records, err := node.Records(question.Class, question.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -48,13 +48,13 @@ func (s *DefaultStore) GetFromQuestion(question dns.Question) ([]rr.RR, error) {
 }
 
 // Add adds a new resource record to the store
-func (s *DefaultStore) Add(name string, class, t uint16, records []rr.RR, ttl uint32) error {
+func (s *DefaultStore) Add(name string, records []rr.RR) error {
 	node, err := s.Tree.Populate(name)
 	if err != nil {
 		return tree.ErrNodeNotFound
 	}
 
-	node.SetEntry(class, t, records)
+	node.AddRecords(records)
 	return nil
 }
 
@@ -66,7 +66,7 @@ func (s *DefaultStore) Get(name string, class, t uint16) ([]rr.RR, error) {
 		return nil, err
 	}
 
-	records, err := node.Entry(class, t)
+	records, err := node.Records(class, t)
 	if err != nil {
 		return nil, err
 	}
