@@ -37,6 +37,15 @@ func (rr *CNAME) Len() uint16 {
 	return uint16(len(rr.Target)) + 1
 }
 
+func (rr *CNAME) IsSame(o RR) bool {
+	other, ok := o.(*CNAME)
+	if !ok {
+		return false
+	}
+
+	return rr.Target == other.Target
+}
+
 func (rr *CNAME) Unpack(data []byte, offset int) (int, error) {
 	target, offset := pack.UnpackDomainName(data, offset)
 	rr.Target = target

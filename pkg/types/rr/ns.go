@@ -41,6 +41,15 @@ func (rr *NS) Len() uint16 {
 	return uint16(len(rr.NSDName)) + 1
 }
 
+func (rr *NS) IsSame(o RR) bool {
+	other, ok := o.(*NS)
+	if !ok {
+		return false
+	}
+
+	return rr.NSDName == other.NSDName
+}
+
 func (rr *NS) Unpack(data []byte, offset int) (int, error) {
 	name, offset := pack.UnpackDomainName(data, offset)
 	rr.NSDName = name

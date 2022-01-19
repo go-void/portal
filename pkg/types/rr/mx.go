@@ -50,6 +50,15 @@ func (rr *MX) Len() uint16 {
 	return uint16(labels.Len(rr.Exchange)) + 2
 }
 
+func (rr *MX) IsSame(o RR) bool {
+	other, ok := o.(*MX)
+	if !ok {
+		return false
+	}
+
+	return rr.Preference == other.Preference && rr.Exchange == other.Exchange
+}
+
 func (rr *MX) Unpack(data []byte, offset int) (int, error) {
 	preference, offset := pack.UnpackUint16(data, offset)
 	rr.Preference = preference

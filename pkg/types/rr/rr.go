@@ -40,6 +40,9 @@ type RR interface {
 	// Len returns the records RDLENGTH
 	Len() uint16
 
+	// IsSame compares both RRs and returns if they are the same
+	IsSame(RR) bool
+
 	// Unpack unpacks the RDATA
 	Unpack([]byte, int) (int, error)
 

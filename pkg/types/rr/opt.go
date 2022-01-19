@@ -46,6 +46,10 @@ func (rr *OPT) Len() uint16 {
 	return len
 }
 
+func (rr *OPT) IsSame(o RR) bool {
+	return false
+}
+
 func (rr *OPT) Unpack(data []byte, offset int) (int, error) {
 	options, offset, err := pack.UnpackEDNSOptions(data, offset, rr.H.RDLength)
 	if err != nil {

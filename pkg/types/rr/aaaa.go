@@ -42,6 +42,15 @@ func (rr *AAAA) Len() uint16 {
 	return 16
 }
 
+func (rr *AAAA) IsSame(o RR) bool {
+	other, ok := o.(*AAAA)
+	if !ok {
+		return false
+	}
+
+	return rr.Address.Equal(other.Address)
+}
+
 func (rr *AAAA) Unpack(data []byte, offset int) (int, error) {
 	address, offset := pack.UnpackIPv6Address(data, offset)
 	rr.Address = address

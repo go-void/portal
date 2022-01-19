@@ -38,6 +38,15 @@ func (rr *MG) Len() uint16 {
 	return uint16(len(rr.MGMName)) + 1
 }
 
+func (rr *MG) IsSame(o RR) bool {
+	other, ok := o.(*MG)
+	if !ok {
+		return false
+	}
+
+	return rr.MGMName == other.MGMName
+}
+
 func (rr *MG) Unpack(data []byte, offset int) (int, error) {
 	name, offset := pack.UnpackDomainName(data, offset)
 	rr.MGMName = name

@@ -97,6 +97,34 @@ func (rr *SOA) Len() uint16 {
 	return uint16(len(rr.MName)+len(rr.RName)) + 2 + 20
 }
 
+func (rr *SOA) IsSame(o RR) bool {
+	other, ok := o.(*SOA)
+	if !ok {
+		return false
+	}
+
+	if rr.MName != other.MName {
+		return false
+	}
+	if rr.RName != other.RName {
+		return false
+	}
+	if rr.Serial != other.Serial {
+		return false
+	}
+	if rr.Refresh != other.Refresh {
+		return false
+	}
+	if rr.Retry != other.Retry {
+		return false
+	}
+	if rr.Expire != other.Expire {
+		return false
+	}
+
+	return rr.Minimum == other.Minimum
+}
+
 func (rr *SOA) Unpack(data []byte, offset int) (int, error) {
 	mname, offset := pack.UnpackDomainName(data, offset)
 	rr.MName = mname

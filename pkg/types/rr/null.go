@@ -35,6 +35,10 @@ func (rr *NULL) Len() uint16 {
 	return 0
 }
 
+func (rr *NULL) IsSame(o RR) bool {
+	return true
+}
+
 func (rr *NULL) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }

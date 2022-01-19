@@ -45,6 +45,15 @@ func (rr *HINFO) Len() uint16 {
 	return uint16(len(rr.CPU)+len(rr.OS)) + 2
 }
 
+func (rr *HINFO) IsSame(o RR) bool {
+	other, ok := o.(*HINFO)
+	if !ok {
+		return false
+	}
+
+	return rr.CPU == other.CPU && rr.OS == other.OS
+}
+
 func (rr *HINFO) Unpack(data []byte, offset int) (int, error) {
 	cpu, offset := pack.UnpackCharacterString(data, offset)
 	rr.CPU = cpu

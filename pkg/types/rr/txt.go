@@ -39,6 +39,15 @@ func (rr *TXT) Len() uint16 {
 	return uint16(len(rr.Data)) + 1
 }
 
+func (rr *TXT) IsSame(o RR) bool {
+	other, ok := o.(*TXT)
+	if !ok {
+		return false
+	}
+
+	return rr.Data == other.Data
+}
+
 func (rr *TXT) Unpack(data []byte, offset int) (int, error) {
 	// TODO (Techassi): Figure out how to unpack multiple character strings
 	str, offset := pack.UnpackCharacterString(data, offset)
