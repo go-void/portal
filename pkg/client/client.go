@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/dio"
+	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/types/dns"
 	"github.com/go-void/portal/pkg/types/opcode"
@@ -53,28 +54,30 @@ type Client interface {
 
 // DefaultClient is the default DNS client to query and retrieve DNS messages
 type DefaultClient struct {
-	// Network the client is using (default: udp)
-	Network string
+	// network the client is using (default: udp)
+	network string
 
-	// Unpacker implements the Unpacker interface to unwrap
+	// unpacker implements the unpacker interface to unwrap
 	// DNS messages
-	Unpacker packers.Unpacker
+	unpacker packers.Unpacker
 
-	// Packer implements the Packer interface to pack
+	// packer implements the packer interface to pack
 	// DNS messages
-	Packer packers.Packer
+	packer packers.Packer
 
-	// Reader implements the Reader interface to read
+	// reader implements the reader interface to read
 	// incoming TCP and UDP messages
-	Reader dio.Reader
+	reader dio.Reader
 
-	// Writer implements the Writer interface to write
+	// writer implements the writer interface to write
 	// outgoing TCP and UDP messages
-	Writer dio.Writer
+	writer dio.Writer
 
-	DialTimeout  time.Duration
-	WriteTimeout time.Duration
-	ReadTimeout  time.Duration
+	logger *logger.Logger
+
+	dialTimeout  time.Duration
+	writeTimeout time.Duration
+	readTimeout  time.Duration
 
 	// headerID is a 16 bit uint which get's used as the DNS
 	// header identifier
@@ -83,7 +86,7 @@ type DefaultClient struct {
 	lock sync.RWMutex
 }
 
-func NewDefault() *DefaultClient {
+func NewDefault(l *logger.Logger) *DefaultClient {
 	rand.Seed(time.Now().UnixNano())
 
 	var size int
@@ -98,28 +101,29 @@ func NewDefault() *DefaultClient {
 
 	// TODO (Techassi): Make Client options configurable
 	return &DefaultClient{
-		Network:      "udp",
-		Unpacker:     packers.NewDefaultUnpacker(),
-		Packer:       packers.NewDefaultPacker(),
-		Reader:       dio.NewDefaultReader(size),
-		Writer:       dio.NewDefaultWriter(),
-		DialTimeout:  2 * time.Second,
-		WriteTimeout: 2 * time.Second,
-		ReadTimeout:  2 * time.Second,
+		network:      "udp",
+		unpacker:     packers.NewDefaultUnpacker(),
+		packer:       packers.NewDefaultPacker(),
+		reader:       dio.NewDefaultReader(size),
+		writer:       dio.NewDefaultWriter(),
+		logger:       l,
+		dialTimeout:  2 * time.Second,
+		writeTimeout: 2 * time.Second,
+		readTimeout:  2 * time.Second,
 		headerID:     1,
 	}
 }
 
 func (c *DefaultClient) Dial(network string, ip net.IP) (net.Conn, error) {
 	address := utils.DNSAddress(ip)
-	conn, err := net.DialTimeout(network, address, c.DialTimeout)
+	conn, err := net.DialTimeout(network, address, c.dialTimeout)
 	if err != nil {
 		return nil, err
 	}
 
 	t := time.Now()
-	conn.SetWriteDeadline(t.Add(c.WriteTimeout))
-	conn.SetReadDeadline(t.Add(c.ReadTimeout))
+	conn.SetWriteDeadline(t.Add(c.writeTimeout))
+	conn.SetReadDeadline(t.Add(c.readTimeout))
 
 	return conn, nil
 }
@@ -136,7 +140,7 @@ func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (*dns.Mes
 		Class: class,
 	})
 
-	switch c.Network {
+	switch c.network {
 	case "udp", "udp4", "udp6":
 		return c.QueryUDP(query, ip)
 	}
@@ -147,14 +151,14 @@ func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (*dns.Mes
 // QueryUDP sends a DNS 'query' to a remote DNS server with 'ip' using UDP
 func (c *DefaultClient) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, error) {
 	// Establish UDP connection
-	conn, err := c.Dial(c.Network, ip)
+	conn, err := c.Dial(c.network, ip)
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
 	// Pack DNS message into wire format
-	b, err := c.Packer.Pack(query)
+	b, err := c.packer.Pack(query)
 	if err != nil {
 		return nil, err
 	}
@@ -168,13 +172,13 @@ func (c *DefaultClient) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, e
 	// Read answer of the remote DNS server
 	buf := make([]byte, constants.UDPMinMessageSize)
 	udpConn := conn.(*net.UDPConn)
-	_, _, err = c.Reader.ReadUDP(udpConn, buf)
+	_, _, err = c.reader.ReadUDP(udpConn, buf)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unpack header data
-	header, offset, err := c.Unpacker.UnpackHeader(buf)
+	header, offset, err := c.unpacker.UnpackHeader(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -184,24 +188,24 @@ func (c *DefaultClient) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, e
 	}
 
 	// Unpack remaining message data
-	return c.Unpacker.Unpack(header, buf, offset)
+	return c.unpacker.Unpack(header, buf, offset)
 }
 
 // QueryTCP sends a DNS 'query' to target DNS server with 'ip' using TCP
 func (c *DefaultClient) QueryTCP(query *dns.Message, ip net.IP) (*dns.Message, error) {
-	conn, err := c.Dial(c.Network, ip)
+	conn, err := c.Dial(c.network, ip)
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
-	b, err := c.Packer.Pack(query)
+	b, err := c.packer.Pack(query)
 	if err != nil {
 		return nil, err
 	}
 
 	tcpConn := conn.(*net.TCPConn)
-	err = c.Writer.WriteTCPClose(tcpConn, b)
+	err = c.writer.WriteTCPClose(tcpConn, b)
 	if err != nil {
 		return nil, err
 	}
