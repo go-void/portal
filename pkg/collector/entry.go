@@ -11,7 +11,7 @@ import (
 type Entry struct {
 	ID            string
 	Question      dns.Question
-	Answer        rr.RR
+	Answer        []rr.RR
 	QueryTime     time.Duration
 	ClientIP      net.IP
 	AppliedFilter string
@@ -19,7 +19,7 @@ type Entry struct {
 	Cached        bool
 }
 
-func NewEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
+func NewEntry(question dns.Question, answer []rr.RR, queryTime time.Duration, ip net.IP) Entry {
 	return Entry{
 		ID:            "",
 		QueryTime:     queryTime,
@@ -32,13 +32,13 @@ func NewEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip n
 	}
 }
 
-func NewCachedEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
+func NewCachedEntry(question dns.Question, answer []rr.RR, queryTime time.Duration, ip net.IP) Entry {
 	entry := NewEntry(question, answer, queryTime, ip)
 	entry.Cached = true
 	return entry
 }
 
-func NewFilteredEntry(question dns.Question, answer rr.RR, queryTime time.Duration, ip net.IP) Entry {
+func NewFilteredEntry(question dns.Question, answer []rr.RR, queryTime time.Duration, ip net.IP) Entry {
 	entry := NewEntry(question, answer, queryTime, ip)
 	entry.Filtered = true
 	return entry

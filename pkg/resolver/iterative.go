@@ -18,7 +18,7 @@ type IterativeResolver struct {
 // NewIterativeResolver returns a new iterative resolver
 func NewIterativeResolver() *IterativeResolver {
 	return &IterativeResolver{
-		Client: client.NewDefault(),
+		// Client: client.NewDefault(),
 	}
 }
 

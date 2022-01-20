@@ -18,6 +18,12 @@ type RecursiveResolver struct {
 	// external DNS servers
 	client client.Client
 
+	// Access to the cache instance
+	cache cache.Cache
+
+	// Access to the logger instance
+	logger *logger.Logger
+
 	maxExpired int
 
 	// hints is a slice of root DNS server hints
@@ -26,12 +32,6 @@ type RecursiveResolver struct {
 	// hintIndex keeps track of which root server should
 	// be used. It is a simple round-robin algorithm
 	hintIndex int
-
-	// Access to the cache instance
-	cache cache.Cache
-
-	// Access to the logger instance
-	logger *logger.Logger
 
 	cacheEnabled bool
 	lock         sync.RWMutex
@@ -158,14 +158,14 @@ func (r *RecursiveResolver) Hint() net.IP {
 
 // LookupInCache is a convenience function which abstracts the lookup of a domain name in the cache
 func (r *RecursiveResolver) LookupInCache(name string, class, t uint16) ([]rr.RR, bool) {
-	entry, status, err := r.cache.Lookup(name, class, t)
+	records, status, err := r.cache.Lookup(name, class, t)
 	if err != nil {
 		fmt.Println(err)
 		return nil, false
 	}
 
 	if status == cache.Hit {
-		return entry, true
+		return records, true
 	}
 
 	// TODO (Techassi): Redo this

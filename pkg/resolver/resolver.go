@@ -47,7 +47,7 @@ func New(cfg config.ResolverOptions, c cache.Cache, l *logger.Logger) Resolver {
 	case "i":
 		// return NewIterativeResolver()
 	case "f":
-		// return NewForwardingResolver(cfg.Upstream, c, l)
+		return NewForwardingResolver(cfg, c, l)
 	}
 	return nil
 }
