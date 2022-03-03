@@ -27,7 +27,7 @@ type Unpacker interface {
 
 	// UnpackQuestion unpacks a question from the received
 	// byte slice
-	UnpackQuestion([]byte, int) (dns.Question, int)
+	UnpackQuestion([]byte, int) (dns.Question, int, error)
 
 	// UnpackRRList unpacks a list of resource records from the
 	// received byte slice
@@ -39,7 +39,7 @@ type Unpacker interface {
 
 	// UnpackRRHeader unpacks header data of a resource
 	// record from the received byte slice
-	UnpackRRHeader([]byte, int) (rr.Header, int)
+	UnpackRRHeader([]byte, int) (rr.Header, int, error)
 }
 
 // DefaultWrapper describes the default wrapper to unwrap / wrap
@@ -79,12 +79,14 @@ func (p *DefaultUnpacker) Unpack(header dns.Header, data []byte, offset int) (*d
 	for i := 0; i < int(header.QDCount); i++ {
 		// Save initial offset to compare later
 		initialOffset := offset
-
-		question, o := p.UnpackQuestion(data, offset)
-		offset = o
+		question, o, err := p.UnpackQuestion(data, offset)
+		if err != nil {
+			return m, err
+		}
 
 		// If the initial offset and the offset after unwrapping
 		// the question match we know that QDCOUNT is wrong
+		offset = o
 		if initialOffset == o {
 			header.QDCount = uint16(i)
 			break
@@ -131,10 +133,22 @@ func (p *DefaultUnpacker) UnpackHeader(data []byte) (dns.Header, int, error) {
 }
 
 // UnpackQuestion unpacks a question from the received byte slice
-func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question, int) {
-	q, offset := pack.UnpackDomainName(data, offset)
-	t, offset := pack.UnpackUint16(data, offset)
-	c, offset := pack.UnpackUint16(data, offset)
+func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question, int, error) {
+	// NOTE (Techassi): Maybe return own or wrapped errors
+	q, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return dns.Question{}, offset, err
+	}
+
+	t, offset, err := pack.UnpackUint16(data, offset)
+	if err != nil {
+		return dns.Question{}, offset, err
+	}
+
+	c, offset, err := pack.UnpackUint16(data, offset)
+	if err != nil {
+		return dns.Question{}, offset, err
+	}
 
 	question := dns.Question{
 		Name:  q,
@@ -142,7 +156,7 @@ func (p *DefaultUnpacker) UnpackQuestion(data []byte, offset int) (dns.Question,
 		Class: c,
 	}
 
-	return question, offset
+	return question, offset, nil
 }
 
 // UnpackRRList unpacks a list of resource records from the received byte slice
@@ -174,7 +188,10 @@ func (p *DefaultUnpacker) UnpackRRList(count uint16, data []byte, offset int) ([
 
 // UnpackRR unpacks a single resource record from the received byte slice
 func (p *DefaultUnpacker) UnpackRR(data []byte, offset int) (rr.RR, int, error) {
-	header, offset := p.UnpackRRHeader(data, offset)
+	header, offset, err := p.UnpackRRHeader(data, offset)
+	if err != nil {
+		return nil, offset, err
+	}
 
 	record, err := rr.New(header.Type)
 	if err != nil {
@@ -193,30 +210,45 @@ func (p *DefaultUnpacker) UnpackRR(data []byte, offset int) (rr.RR, int, error) 
 }
 
 // UnpackRRHeader unpacks header data of a resource record from the received byte slice
-func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.Header, int) {
+func (p *DefaultUnpacker) UnpackRRHeader(data []byte, offset int) (rr.Header, int, error) {
 	header := rr.Header{}
 
 	// Unpack NAME
-	name, offset := pack.UnpackDomainName(data, offset)
+	name, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return header, offset, err
+	}
 	header.Name = name
 
 	// Unpack TYPE
-	rrType, offset := pack.UnpackUint16(data, offset)
+	rrType, offset, err := pack.UnpackUint16(data, offset)
+	if err != nil {
+		return header, offset, err
+	}
 	header.Type = rrType
 
 	// Unpack CLASS
-	rrClass, offset := pack.UnpackUint16(data, offset)
+	rrClass, offset, err := pack.UnpackUint16(data, offset)
+	if err != nil {
+		return header, offset, err
+	}
 	header.Class = rrClass
 
 	// Unpack TTL
-	rrTTL, offset := pack.UnpackUint32(data, offset)
+	rrTTL, offset, err := pack.UnpackUint32(data, offset)
+	if err != nil {
+		return header, offset, err
+	}
 	header.TTL = rrTTL
 
 	// Unpack RDLENGTH
-	rdlength, offset := pack.UnpackUint16(data, offset)
+	rdlength, offset, err := pack.UnpackUint16(data, offset)
+	if err != nil {
+		return header, offset, err
+	}
 	header.RDLength = rdlength
 
 	// NOTE (Techassi): Keep an eye out for time.Now() performance
 	header.Expires = time.Now().Unix() + int64(rrTTL)
-	return header, offset
+	return header, offset, nil
 }
