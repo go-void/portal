@@ -8,8 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// Message describes a complete DNS message describes in RFC 1035
-// Section 4.
+// Message describes a complete DNS message describes in RFC 1035 Section 4.
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-4
 type Message struct {
 	Header     Header
@@ -23,20 +22,24 @@ type Message struct {
 	Compression CompressionMap
 }
 
+// NewMessage returns a new empty (default value) DNS message
 func NewMessage() *Message {
 	return &Message{
 		Compression: NewCompressionMap(),
 	}
 }
 
+// SetIsResponse sets the QR bit of the DNS header to 1
 func (m *Message) SetIsResponse() {
 	m.Header.IsQuery = false
 }
 
+// SetRecursionAvailable sets the RA bit in the DNS header to 1
 func (m *Message) SetRecursionAvailable(ra bool) {
 	m.Header.RecursionAvailable = m.Header.RecursionDesired && ra
 }
 
+// AddRecords adds multiple answerm authority and additional RRs to the appropriate sections in the message
 func (m *Message) AddRecords(answer, authority, additional []rr.RR) {
 	m.Answer = append(m.Answer, answer...)
 	m.Header.ANCount += uint16(len(answer))
@@ -48,15 +51,13 @@ func (m *Message) AddRecords(answer, authority, additional []rr.RR) {
 	m.Header.ARCount += uint16(len(additional))
 }
 
-// AddQuestion adds a question to the question section
-// of a DNS message
+// AddQuestion adds a question to the question section of the message
 func (m *Message) AddQuestion(question Question) {
 	m.Question = append(m.Question, question)
 	m.Header.QDCount++
 }
 
-// AddAnswer adds a resource record to the answer section
-// of a DNS message
+// AddAnswer adds a resource record to the answer section of the message
 func (m *Message) AddAnswer(record rr.RR) {
 	if record == nil {
 		return
@@ -66,6 +67,7 @@ func (m *Message) AddAnswer(record rr.RR) {
 	m.Header.ANCount++
 }
 
+// AddAnswers adds multiple resource record sto the answer section of the message
 func (m *Message) AddAnswers(records []rr.RR) {
 	if records == nil {
 		return
@@ -75,8 +77,7 @@ func (m *Message) AddAnswers(records []rr.RR) {
 	m.Header.ANCount += uint16(len(records))
 }
 
-// AddAuthority adds a resource record to the
-// authoritative name server section
+// AddAuthority adds a resource record to the authoritative name server section
 func (m *Message) AddAuthority(record rr.RR) {
 	if record == nil {
 		return
@@ -86,8 +87,7 @@ func (m *Message) AddAuthority(record rr.RR) {
 	m.Header.NSCount++
 }
 
-// AddAdditional adds a resource record to the
-// additional section
+// AddAdditional adds a resource record to the additional section
 func (m *Message) AddAdditional(record rr.RR) {
 	if record == nil {
 		return
@@ -97,6 +97,7 @@ func (m *Message) AddAdditional(record rr.RR) {
 	m.Header.ARCount++
 }
 
+// Len returns the length of the message in octets
 func (m *Message) Len() int {
 	// Fixed DNS header length
 	len := constants.DNSHeaderLen
@@ -120,6 +121,7 @@ func (m *Message) Len() int {
 	return len
 }
 
+// Q returns Name, Class and Type of the question
 func (m *Message) Q() (string, uint16, uint16) {
 	return m.Question[0].Name, m.Question[0].Class, m.Question[0].Type
 }
