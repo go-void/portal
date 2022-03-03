@@ -27,33 +27,8 @@ var (
 	ErrNoMatchHeaderID = errors.New("header ids don't match")
 )
 
-type Client interface {
-	Dial(string, net.IP) (net.Conn, error)
-
-	// Query sends a DNS query for 'name' with 'class' and 'type'
-	// to the remote DNS server with 'ip' and returns the answer
-	// message and any encountered error
-	Query(string, uint16, uint16, net.IP) (*dns.Message, error)
-
-	// QueryUDP sends a DNS query using UDP
-	QueryUDP(*dns.Message, net.IP) (*dns.Message, error)
-
-	// QueryTCP sends a DNS query using TCP
-	QueryTCP(*dns.Message, net.IP) (*dns.Message, error)
-
-	// CreateMessage returns a new DNS message
-	CreateMessage(dns.Header) *dns.Message
-
-	// CreateHeader returns a new DNS message header
-	// with sensible client defaults
-	CreateHeader() dns.Header
-
-	// GetID returns the current header ID and generates a new one
-	GetID() uint16
-}
-
-// DefaultClient is the default DNS client to query and retrieve DNS messages
-type DefaultClient struct {
+// Client is the default DNS client to query and retrieve DNS messages
+type Client struct {
 	// network the client is using (default: udp)
 	network string
 
@@ -86,7 +61,7 @@ type DefaultClient struct {
 	lock sync.RWMutex
 }
 
-func NewDefault(l *logger.Logger) *DefaultClient {
+func New(l *logger.Logger) *Client {
 	rand.Seed(time.Now().UnixNano())
 
 	var size int
@@ -99,22 +74,32 @@ func NewDefault(l *logger.Logger) *DefaultClient {
 		size = len(ancillary6)
 	}
 
-	// TODO (Techassi): Make Client options configurable
-	return &DefaultClient{
+	return &Client{
 		network:      "udp",
 		unpacker:     packers.NewDefaultUnpacker(),
 		packer:       packers.NewDefaultPacker(),
 		reader:       dio.NewDefaultReader(size),
 		writer:       dio.NewDefaultWriter(),
-		logger:       l,
 		dialTimeout:  2 * time.Second,
 		writeTimeout: 2 * time.Second,
 		readTimeout:  2 * time.Second,
 		headerID:     1,
+		logger:       l,
 	}
 }
 
-func (c *DefaultClient) Dial(network string, ip net.IP) (net.Conn, error) {
+// Configure configures available client options
+func (c *Client) Configure(opts ...OptionFunc) error {
+	for _, opt := range opts {
+		err := opt(c)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Client) Dial(network string, ip net.IP) (net.Conn, error) {
 	address := utils.DNSAddress(ip)
 	conn, err := net.DialTimeout(network, address, c.dialTimeout)
 	if err != nil {
@@ -128,9 +113,9 @@ func (c *DefaultClient) Dial(network string, ip net.IP) (net.Conn, error) {
 	return conn, nil
 }
 
-// Query sends a DNS query for 'name' with 'class' and 'type' to the remote DNS server with 'ip'
-// and returns the answer message and any encountered error
-func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (*dns.Message, error) {
+// Query sends a DNS query for 'name' with 'class' and 'type' to the remote DNS server with 'ip' and returns the answer
+// message and any encountered error
+func (c *Client) Query(name string, class, t uint16, ip net.IP) (*dns.Message, error) {
 	header := c.CreateHeader()
 	query := c.CreateMessage(header)
 
@@ -149,7 +134,7 @@ func (c *DefaultClient) Query(name string, class, t uint16, ip net.IP) (*dns.Mes
 }
 
 // QueryUDP sends a DNS 'query' to a remote DNS server with 'ip' using UDP
-func (c *DefaultClient) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, error) {
+func (c *Client) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, error) {
 	// Establish UDP connection
 	conn, err := c.Dial(c.network, ip)
 	if err != nil {
@@ -192,7 +177,7 @@ func (c *DefaultClient) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, e
 }
 
 // QueryTCP sends a DNS 'query' to target DNS server with 'ip' using TCP
-func (c *DefaultClient) QueryTCP(query *dns.Message, ip net.IP) (*dns.Message, error) {
+func (c *Client) QueryTCP(query *dns.Message, ip net.IP) (*dns.Message, error) {
 	conn, err := c.Dial(c.network, ip)
 	if err != nil {
 		return nil, err
@@ -214,14 +199,14 @@ func (c *DefaultClient) QueryTCP(query *dns.Message, ip net.IP) (*dns.Message, e
 }
 
 // CreateMessage creates a new DNS message with a header
-func (c *DefaultClient) CreateMessage(header dns.Header) *dns.Message {
+func (c *Client) CreateMessage(header dns.Header) *dns.Message {
 	return &dns.Message{
 		Header: header,
 	}
 }
 
 // CreateHeader returns a new DNS message header
-func (c *DefaultClient) CreateHeader() dns.Header {
+func (c *Client) CreateHeader() dns.Header {
 	return dns.Header{
 		ID:                 c.GetID(),
 		IsQuery:            true,
@@ -236,7 +221,7 @@ func (c *DefaultClient) CreateHeader() dns.Header {
 }
 
 // GetID returns the current header ID and generates a new one
-func (c *DefaultClient) GetID() uint16 {
+func (c *Client) GetID() uint16 {
 	c.lock.Lock()
 	id := c.headerID
 	c.headerID = uint16(rand.Intn(math.MaxUint16-1) + 1)

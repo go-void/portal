@@ -15,7 +15,7 @@ import (
 type ForwardingResolver struct {
 	// client is a DNS client which sends queries to
 	// external DNS servers
-	client client.Client
+	client *client.Client
 
 	// Access to the cache instance
 	cache cache.Cache
@@ -35,7 +35,7 @@ type ForwardingResolver struct {
 // NewForwardingResolver returns a new forwarding resolver
 func NewForwardingResolver(cfg config.ResolverOptions, c cache.Cache, l *logger.Logger) *ForwardingResolver {
 	return &ForwardingResolver{
-		client:       client.NewDefault(l),
+		client:       client.New(l),
 		upstream:     net.ParseIP(cfg.RawUpstream),
 		cacheEnabled: cfg.CacheEnabled,
 		maxExpired:   300,

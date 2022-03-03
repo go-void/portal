@@ -16,13 +16,13 @@ import (
 type RecursiveResolver struct {
 	// client is a DNS client which sends queries to
 	// external DNS servers
-	client client.Client
-
-	// Access to the cache instance
-	cache cache.Cache
+	client *client.Client
 
 	// Access to the logger instance
 	logger *logger.Logger
+
+	// Access to the cache instance
+	cache cache.Cache
 
 	maxExpired int
 
@@ -46,7 +46,7 @@ func NewRecursiveResolver(cfg config.ResolverOptions, c cache.Cache, l *logger.L
 	}
 
 	return &RecursiveResolver{
-		client:       client.NewDefault(l),
+		client:       client.New(l),
 		hints:        hints,
 		cache:        c,
 		logger:       l,
