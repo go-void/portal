@@ -10,19 +10,8 @@ import (
 )
 
 var (
-	errInvalidLevel = errors.New("invalid log level")
-	errInvalidMode  = errors.New("invalid log mode")
+	errInvalidMode = errors.New("invalid log mode")
 )
-
-var levelMap = map[string]zapcore.Level{
-	"debug":  zapcore.DebugLevel,
-	"info":   zapcore.InfoLevel,
-	"warn":   zapcore.WarnLevel,
-	"error":  zapcore.ErrorLevel,
-	"dpanic": zapcore.DPanicLevel,
-	"panic":  zapcore.PanicLevel,
-	"fatal":  zapcore.FatalLevel,
-}
 
 type Logger struct {
 	*zap.Logger
@@ -43,7 +32,7 @@ func New(c config.LogOptions) (*Logger, error) {
 		return nil, err
 	}
 
-	level, err := GetLevel(c.Level)
+	level, err := zapcore.ParseLevel(c.Level)
 	if err != nil {
 		return nil, err
 	}
@@ -65,13 +54,6 @@ func New(c config.LogOptions) (*Logger, error) {
 		Logger: zap.New(core),
 		closer: closer,
 	}, nil
-}
-
-func GetLevel(level string) (zapcore.Level, error) {
-	if l, ok := levelMap[level]; ok {
-		return l, nil
-	}
-	return -2, errInvalidLevel
 }
 
 func (l *Logger) Close() {
