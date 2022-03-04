@@ -13,36 +13,50 @@ var (
 	ErrCharacterStringTooLong = errors.New("character string too long")
 )
 
-// TODO (Techassi): Add offset overflow check
-
-// PackUint8 packs a uint8 (one octet) into buf and returns the
-// new offset
+// PackUint8 packs a uint8 (one octet) into buf and returns the new offset
 func PackUint8(data uint8, buf []byte, offset int) (int, error) {
+	if offset+1 > len(buf) {
+		return len(buf), ErrOverflowPackUint8
+	}
+
 	buf[offset] = data
 	return offset + 1, nil
 }
 
-// PackUint16 packs a uint16 (two octets) into buf and returns the
-// new offset
+// PackUint16 packs a uint16 (two octets) into buf and returns the new offset
 func PackUint16(data uint16, buf []byte, offset int) (int, error) {
+	if offset+2 > len(buf) {
+		return len(buf), ErrOverflowPackUint16
+	}
+
 	binary.BigEndian.PutUint16(buf[offset:], data)
 	return offset + 2, nil
 }
 
-// PackUint32 ppacks a uint32 (four octets) into buff and returns the
-// new offset
+// PackUint32 ppacks a uint32 (four octets) into buff and returns the new offset
 func PackUint32(data uint32, buf []byte, offset int) (int, error) {
+	if offset+4 > len(buf) {
+		return len(buf), ErrOverflowPackUint32
+	}
+
 	binary.BigEndian.PutUint32(buf[offset:], data)
 	return offset + 4, nil
 }
 
-// PackIPAddress packs a IP address (v4 or v6) into buf and returns
-// the new offset
+// PackIPAddress packs a IP address (v4 or v6) into buf and returns the new offset
 func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
 	if i := ip.To4(); i != nil {
+		if offset+net.IPv4len > len(buf) {
+			return len(buf), ErrOverflowPackIPv4
+		}
+
 		ipAsUint32 := binary.BigEndian.Uint32(i)
 		binary.BigEndian.PutUint32(buf[offset:], ipAsUint32)
 		return offset + 4, nil
+	}
+
+	if offset+net.IPv6len > len(buf) {
+		return len(buf), ErrOverfloPpackIPv6
 	}
 
 	i := binary.BigEndian.Uint64(ip[:8])
@@ -55,6 +69,7 @@ func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
 	return offset + 8, nil
 }
 
+// TODO (Techassi): Add offset overflow check
 // TODO (Techassi): Implement message compression
 
 // PackDomainName packs a name into buf and returns the new offset.
