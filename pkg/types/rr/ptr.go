@@ -47,8 +47,12 @@ func (rr *PTR) IsSame(o RR) bool {
 }
 
 func (rr *PTR) Unpack(data []byte, offset int) (int, error) {
-	pointer, offset := pack.UnpackDomainName(data, offset)
+	pointer, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.PTRDName = pointer
+
 	return offset, nil
 }
 

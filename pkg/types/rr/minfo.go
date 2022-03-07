@@ -55,10 +55,16 @@ func (rr *MINFO) IsSame(o RR) bool {
 }
 
 func (rr *MINFO) Unpack(data []byte, offset int) (int, error) {
-	rmailbox, offset := pack.UnpackDomainName(data, offset)
+	rmailbox, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.RMailBox = rmailbox
 
-	emailbox, offset := pack.UnpackDomainName(data, offset)
+	emailbox, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.EMailBox = emailbox
 
 	return offset, nil

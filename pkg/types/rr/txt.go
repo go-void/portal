@@ -50,8 +50,12 @@ func (rr *TXT) IsSame(o RR) bool {
 
 func (rr *TXT) Unpack(data []byte, offset int) (int, error) {
 	// TODO (Techassi): Figure out how to unpack multiple character strings
-	str, offset := pack.UnpackCharacterString(data, offset)
+	str, offset, err := pack.UnpackCharacterString(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Data = str
+
 	return offset, nil
 }
 

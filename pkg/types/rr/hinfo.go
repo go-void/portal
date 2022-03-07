@@ -55,10 +55,16 @@ func (rr *HINFO) IsSame(o RR) bool {
 }
 
 func (rr *HINFO) Unpack(data []byte, offset int) (int, error) {
-	cpu, offset := pack.UnpackCharacterString(data, offset)
+	cpu, offset, err := pack.UnpackCharacterString(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.CPU = cpu
 
-	os, offset := pack.UnpackCharacterString(data, offset)
+	os, offset, err := pack.UnpackCharacterString(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.OS = os
 
 	return offset, nil

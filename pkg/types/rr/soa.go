@@ -126,25 +126,46 @@ func (rr *SOA) IsSame(o RR) bool {
 }
 
 func (rr *SOA) Unpack(data []byte, offset int) (int, error) {
-	mname, offset := pack.UnpackDomainName(data, offset)
+	mname, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.MName = mname
 
-	rname, offset := pack.UnpackDomainName(data, offset)
+	rname, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.RName = rname
 
-	serial, offset := pack.UnpackUint32(data, offset)
+	serial, offset, err := pack.UnpackUint32(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Serial = serial
 
-	refresh, offset := pack.UnpackUint32(data, offset)
+	refresh, offset, err := pack.UnpackUint32(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Refresh = refresh
 
-	retry, offset := pack.UnpackUint32(data, offset)
+	retry, offset, err := pack.UnpackUint32(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Retry = retry
 
-	expire, offset := pack.UnpackUint32(data, offset)
+	expire, offset, err := pack.UnpackUint32(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Expire = expire
 
-	minimum, offset := pack.UnpackUint32(data, offset)
+	minimum, offset, err := pack.UnpackUint32(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Minimum = minimum
 
 	return offset, nil

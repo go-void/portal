@@ -51,8 +51,12 @@ func (rr *NS) IsSame(o RR) bool {
 }
 
 func (rr *NS) Unpack(data []byte, offset int) (int, error) {
-	name, offset := pack.UnpackDomainName(data, offset)
+	name, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.NSDName = name
+
 	return offset, nil
 }
 

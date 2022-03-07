@@ -48,8 +48,12 @@ func (rr *MB) IsSame(o RR) bool {
 }
 
 func (rr *MB) Unpack(data []byte, offset int) (int, error) {
-	name, offset := pack.UnpackDomainName(data, offset)
+	name, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.MADName = name
+
 	return offset, nil
 }
 

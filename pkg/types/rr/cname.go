@@ -47,8 +47,12 @@ func (rr *CNAME) IsSame(o RR) bool {
 }
 
 func (rr *CNAME) Unpack(data []byte, offset int) (int, error) {
-	target, offset := pack.UnpackDomainName(data, offset)
+	target, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Target = target
+
 	return offset, nil
 }
 

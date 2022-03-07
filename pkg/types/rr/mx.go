@@ -60,10 +60,16 @@ func (rr *MX) IsSame(o RR) bool {
 }
 
 func (rr *MX) Unpack(data []byte, offset int) (int, error) {
-	preference, offset := pack.UnpackUint16(data, offset)
+	preference, offset, err := pack.UnpackUint16(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Preference = preference
 
-	exchange, offset := pack.UnpackDomainName(data, offset)
+	exchange, offset, err := pack.UnpackDomainName(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Exchange = exchange
 
 	return offset, nil

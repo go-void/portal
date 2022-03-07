@@ -53,8 +53,12 @@ func (rr *A) IsSame(o RR) bool {
 }
 
 func (rr *A) Unpack(data []byte, offset int) (int, error) {
-	address, offset := pack.UnpackIPv4Address(data, offset)
+	address, offset, err := pack.UnpackIPv4Address(data, offset)
+	if err != nil {
+		return offset, err
+	}
 	rr.Address = address
+
 	return offset, nil
 }
 
