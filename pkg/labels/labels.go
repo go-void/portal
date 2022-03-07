@@ -6,7 +6,7 @@ import (
 
 // FromRoot returns a slice of labels of a domain name originating from root.
 // Example: example.com. => . -> com -> example
-func FromRoot(name string) []string {
+func FromRoot(name string) ([]string, error) {
 	// TODO (Techassi): Check if the provided name / domain is valid (E.g. example..com is invalid)
 
 	var o []string
@@ -17,7 +17,7 @@ func FromRoot(name string) []string {
 		i := strings.LastIndex(name[:c], ".")
 		if i == -1 {
 			o = append(o, name[:c])
-			return o
+			return o, nil
 		}
 
 		if i == l-1 {
@@ -30,7 +30,7 @@ func FromRoot(name string) []string {
 		c = i
 	}
 
-	return o
+	return o, nil
 }
 
 // FromBottom returns a slice of labels of a domain name bottom up.
