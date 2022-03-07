@@ -76,7 +76,10 @@ func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
 // Example: example.com => 7 101 120 97 109 112 108 101 3 99 111 109 0.
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 <domain-name>
 func PackDomainName(name string, buf []byte, offset int) (int, error) {
-	labels := labels.FromBottom(name)
+	labels, err := labels.FromBottom(name)
+	if err != nil {
+		return len(buf), err
+	}
 
 	for i := 0; i < len(labels); i++ {
 		label := labels[i]

@@ -1,8 +1,11 @@
 package labels
 
 import (
+	"errors"
 	"strings"
 )
+
+var ErrInvalidName = errors.New("invalid name")
 
 // FromRoot returns a slice of labels of a domain name originating from root.
 // Example: example.com. => . -> com -> example
@@ -35,25 +38,67 @@ func FromRoot(name string) ([]string, error) {
 
 // FromBottom returns a slice of labels of a domain name bottom up.
 // Example: example.com. => example -> com -> .
-func FromBottom(name string) []string {
-	var o []string
-
+func FromBottom(name string) ([]string, error) {
 	if name == "" || name == "." {
-		o = append(o, ".")
-		return o
+		return []string{"."}, nil
 	}
 
-	o = strings.Split(name, ".")
+	var (
+		labels []string
+		buf    []byte
+		dot    bool
+	)
 
-	if o[len(o)-1] == "" {
-		o[len(o)-1] = "."
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		switch {
+		case c == '.':
+			if dot {
+				return nil, ErrInvalidName
+			}
+			dot = true
+
+			labels = append(labels, string(buf))
+			buf = []byte{}
+		case c == '-',
+			c > 0x30 && c < 0x39, // ASCII 0-9
+			c > 0x41 && c < 0x5A, // ASCII A-Z
+			c > 0x61 && c < 0x7A: // ASCII a-z
+			dot = false
+			buf = append(buf, c)
+		default:
+			return nil, ErrInvalidName
+		}
+	}
+	// Append remaining buf
+	labels = append(labels, string(buf))
+
+	if labels[len(labels)-1] == "" {
+		labels[len(labels)-1] = "."
 	}
 
-	return o
+	return labels, nil
 }
 
-func IsValidDomain(name string) bool {
-	// TODO (Techassi): Implement this
+// IsValid returns if the provided name is valid
+func IsValid(name string) bool {
+	for i, dot := 0, false; i < len(name); i++ {
+		c := name[i]
+		switch {
+		case c == '.':
+			if dot {
+				return false
+			}
+			dot = true
+		case c == '-',
+			c > 0x30 && c < 0x39, // ASCII 0-9
+			c > 0x41 && c < 0x5A, // ASCII A-Z
+			c > 0x61 && c < 0x7A: // ASCII a-z
+			dot = false
+		default:
+			return false
+		}
+	}
 	return true
 }
 
