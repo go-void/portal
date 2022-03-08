@@ -96,6 +96,28 @@ func FromBottom(name string) ([]string, bool) {
 	return labels, true
 }
 
+// IsValid returns if the name is valid
+func IsValid(name string) bool {
+	for i, dot := 0, false; i < len(name); i++ {
+		c := name[i]
+		switch {
+		case c == '.':
+			if dot {
+				return false
+			}
+			dot = true
+		case c == '-',
+			c >= 0x30 && c <= 0x39, // ASCII 0-9
+			c >= 0x41 && c <= 0x5A, // ASCII A-Z
+			c >= 0x61 && c <= 0x7A: // ASCII a-z
+			dot = false
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 // Rootify returns the (domain) name terminated by '.' if not already present.
 // Example: example.com -> example.com. or example.com. -> example.com.
 func Rootify(name string) string {
