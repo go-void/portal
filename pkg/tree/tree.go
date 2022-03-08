@@ -42,9 +42,9 @@ func (t *Tree) Get(name string) (Node, error) {
 
 // Walk traverses the tree until the end of labels is reached
 func (t *Tree) Walk(name string) (Node, error) {
-	names, err := labels.FromRoot(name)
-	if err != nil {
-		return Node{}, err
+	names, ok := labels.FromRoot(name)
+	if !ok {
+		return Node{}, labels.ErrInvalidName
 	}
 
 	current := t.root
@@ -67,9 +67,9 @@ func (t *Tree) Walk(name string) (Node, error) {
 // WalkChain traverses the tree until the end of labels is reached which
 // returns a list of nodes
 func (t *Tree) WalkChain(name string) ([]Node, error) {
-	names, err := labels.FromRoot(name)
-	if err != nil {
-		return nil, err
+	names, ok := labels.FromRoot(name)
+	if !ok {
+		return nil, labels.ErrInvalidName
 	}
 
 	var (
@@ -98,9 +98,9 @@ func (t *Tree) WalkChain(name string) ([]Node, error) {
 // Populate traverses the tree and adds nodes along the path which
 // don't exist yet
 func (t *Tree) Populate(name string) (Node, error) {
-	names, err := labels.FromRoot(name)
-	if err != nil {
-		return Node{}, err
+	names, ok := labels.FromRoot(name)
+	if !ok {
+		return Node{}, labels.ErrInvalidName
 	}
 
 	current := t.root

@@ -7,99 +7,93 @@ import (
 
 var ErrInvalidName = errors.New("invalid name")
 
-// FromRoot returns a slice of labels of a domain name originating from root.
+// FromRoot returns a slice of labels of a domain name originating from root and additionally returns if the name is
+// valid.
 // Example: example.com. => . -> com -> example
-func FromRoot(name string) ([]string, error) {
-	// TODO (Techassi): Check if the provided name / domain is valid (E.g. example..com is invalid)
-
-	var o []string
-	var l = len(name)
-	var c = l
-
-	for c != 0 {
-		i := strings.LastIndex(name[:c], ".")
-		if i == -1 {
-			o = append(o, name[:c])
-			return o, nil
-		}
-
-		if i == l-1 {
-			o = append(o, ".")
-			c = i
-			continue
-		}
-
-		o = append(o, name[i+1:c])
-		c = i
-	}
-
-	return o, nil
-}
-
-// FromBottom returns a slice of labels of a domain name bottom up.
-// Example: example.com. => example -> com -> .
-func FromBottom(name string) ([]string, error) {
+func FromRoot(name string) ([]string, bool) {
 	if name == "" || name == "." {
-		return []string{"."}, nil
+		return []string{"."}, true
 	}
 
 	var (
-		labels []string
-		buf    []byte
-		dot    bool
+		length = len(name) - 1
+		labels = []string{}
+		i, b   = length, length + 1
 	)
 
-	for i := 0; i < len(name); i++ {
+	for dot := false; i >= 0; i-- {
 		c := name[i]
 		switch {
 		case c == '.':
 			if dot {
-				return nil, ErrInvalidName
+				return labels, false
 			}
 			dot = true
 
-			labels = append(labels, string(buf))
-			buf = []byte{}
+			if i == length {
+				labels = append(labels, ".")
+				b = i
+				continue
+			}
+
+			labels = append(labels, name[i+1:b])
+			b = i
 		case c == '-',
-			c > 0x30 && c < 0x39, // ASCII 0-9
-			c > 0x41 && c < 0x5A, // ASCII A-Z
-			c > 0x61 && c < 0x7A: // ASCII a-z
+			c >= 0x30 && c <= 0x39, // ASCII 0-9
+			c >= 0x41 && c <= 0x5A, // ASCII A-Z
+			c >= 0x61 && c <= 0x7A: // ASCII a-z
 			dot = false
-			buf = append(buf, c)
 		default:
-			return nil, ErrInvalidName
+			return labels, false
 		}
 	}
-	// Append remaining buf
-	labels = append(labels, string(buf))
 
-	if labels[len(labels)-1] == "" {
-		labels[len(labels)-1] = "."
-	}
-
-	return labels, nil
+	labels = append(labels, name[i+1:b])
+	return labels, true
 }
 
-// IsValid returns if the provided name is valid
-func IsValid(name string) bool {
-	for i, dot := 0, false; i < len(name); i++ {
+// FromBottom returns a slice of labels of a domain name bottom up and additionally returns if the name is valid.
+// Example: example.com. => example -> com -> .
+func FromBottom(name string) ([]string, bool) {
+	if name == "" || name == "." {
+		return []string{"."}, true
+	}
+
+	var (
+		labels = []string{}
+		length = len(name)
+		buffer = []byte{}
+	)
+
+	for i, dot := 0, false; i < length; i++ {
 		c := name[i]
 		switch {
 		case c == '.':
 			if dot {
-				return false
+				return labels, false
 			}
+
 			dot = true
+			labels = append(labels, string(buffer))
+			buffer = nil
+
+			// If we end with .
+			if i == length-1 {
+				labels = append(labels, ".")
+				return labels, true
+			}
 		case c == '-',
-			c > 0x30 && c < 0x39, // ASCII 0-9
-			c > 0x41 && c < 0x5A, // ASCII A-Z
-			c > 0x61 && c < 0x7A: // ASCII a-z
+			c >= 0x30 && c <= 0x39, // ASCII 0-9
+			c >= 0x41 && c <= 0x5A, // ASCII A-Z
+			c >= 0x61 && c <= 0x7A: // ASCII a-z
 			dot = false
+			buffer = append(buffer, c)
 		default:
-			return false
+			return labels, false
 		}
 	}
-	return true
+	labels = append(labels, string(buffer))
+	return labels, true
 }
 
 // Rootify returns the (domain) name terminated by '.' if not already present.
