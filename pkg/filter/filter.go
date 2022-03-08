@@ -15,6 +15,7 @@ var (
 	ErrInvalidFilterMethod = errors.New("filter: invalid filter method")
 	ErrInvalidDomainRule   = errors.New("filter: invalid domain rule")
 	ErrInvalidIPAddress    = errors.New("filter: invalid ip address")
+	ErrInvalidName         = errors.New("filter: invalid name")
 	ErrNoSuchRule          = errors.New("filter: no such rule")
 
 	defaultFilterIP = net.IPv4(0, 0, 0, 0)
@@ -102,7 +103,6 @@ func (f *Filter) Match(message dns.Message) (bool, dns.Message, error) {
 // ParseRule parses a filter rule with the following format: '<ip-address> <domain>'.
 // Example: '0.0.0.0 example.com'
 func (f *Filter) ParseRule(t RuleType, input string) (string, net.IP, error) {
-	// TODO (Techassi): Check domain validity (labels.IsValidDomain)
 	// FIXME (Techassi): Actually check rule type
 	parts := strings.Split(input, " ")
 	switch len(parts) {
@@ -112,6 +112,10 @@ func (f *Filter) ParseRule(t RuleType, input string) (string, net.IP, error) {
 		ip := net.ParseIP(parts[0])
 		if ip == nil {
 			return "", nil, ErrInvalidIPAddress
+		}
+
+		if !labels.IsValid(parts[1]) {
+			return "", nil, ErrInvalidName
 		}
 
 		return parts[1], ip, nil
