@@ -1,6 +1,9 @@
 package rr
 
-import "github.com/go-void/portal/pkg/pack"
+import (
+	"github.com/go-void/portal/pkg/compression"
+	"github.com/go-void/portal/pkg/pack"
+)
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.7 (EXPERIMENTAL)
 type MINFO struct {
@@ -70,11 +73,11 @@ func (rr *MINFO) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *MINFO) Pack(buf []byte, offset int) (int, error) {
-	offset, err := pack.PackDomainName(rr.RMailBox, buf, offset)
+func (rr *MINFO) Pack(buf []byte, offset int, comp compression.Map) (int, error) {
+	offset, err := pack.PackDomainName(rr.RMailBox, buf, offset, comp)
 	if err != nil {
 		return offset, err
 	}
 
-	return pack.PackDomainName(rr.EMailBox, buf, offset)
+	return pack.PackDomainName(rr.EMailBox, buf, offset, comp)
 }

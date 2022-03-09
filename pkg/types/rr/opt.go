@@ -3,6 +3,7 @@ package rr
 import (
 	"fmt"
 
+	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/pack"
 	"github.com/go-void/portal/pkg/types/edns"
 )
@@ -59,7 +60,7 @@ func (rr *OPT) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *OPT) Pack(buf []byte, offset int) (int, error) {
+func (rr *OPT) Pack(buf []byte, offset int, _ compression.Map) (int, error) {
 	offset, err := pack.PackEDNSOptions(rr.Options, buf, offset)
 	if err != nil {
 		return offset, err

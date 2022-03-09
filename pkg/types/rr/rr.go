@@ -13,6 +13,8 @@ import (
 	"math"
 	"strings"
 	"time"
+
+	"github.com/go-void/portal/pkg/compression"
 )
 
 var (
@@ -47,7 +49,7 @@ type RR interface {
 	Unpack([]byte, int) (int, error)
 
 	// Pack packs the RDATA
-	Pack([]byte, int) (int, error)
+	Pack([]byte, int, compression.Map) (int, error)
 }
 
 // Header describes header data of a resource record.

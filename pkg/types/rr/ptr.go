@@ -1,6 +1,9 @@
 package rr
 
-import "github.com/go-void/portal/pkg/pack"
+import (
+	"github.com/go-void/portal/pkg/compression"
+	"github.com/go-void/portal/pkg/pack"
+)
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.12
 type PTR struct {
@@ -56,6 +59,6 @@ func (rr *PTR) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *PTR) Pack(buf []byte, offset int) (int, error) {
-	return pack.PackDomainName(rr.PTRDName, buf, offset)
+func (rr *PTR) Pack(buf []byte, offset int, comp compression.Map) (int, error) {
+	return pack.PackDomainName(rr.PTRDName, buf, offset, comp)
 }

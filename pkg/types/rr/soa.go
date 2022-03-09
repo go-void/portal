@@ -3,6 +3,7 @@ package rr
 import (
 	"errors"
 
+	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/pack"
 )
@@ -171,13 +172,13 @@ func (rr *SOA) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *SOA) Pack(buf []byte, offset int) (int, error) {
-	offset, err := pack.PackDomainName(rr.MName, buf, offset)
+func (rr *SOA) Pack(buf []byte, offset int, comp compression.Map) (int, error) {
+	offset, err := pack.PackDomainName(rr.MName, buf, offset, comp)
 	if err != nil {
 		return offset, err
 	}
 
-	offset, err = pack.PackDomainName(rr.RName, buf, offset)
+	offset, err = pack.PackDomainName(rr.RName, buf, offset, comp)
 	if err != nil {
 		return offset, err
 	}

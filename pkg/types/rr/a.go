@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/pack"
 )
 
@@ -62,7 +63,7 @@ func (rr *A) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *A) Pack(buf []byte, offset int) (int, error) {
+func (rr *A) Pack(buf []byte, offset int, _ compression.Map) (int, error) {
 	ip := binary.BigEndian.Uint32(rr.Address[12:16])
 	binary.BigEndian.PutUint32(buf[offset:], ip)
 	return offset + 4, nil

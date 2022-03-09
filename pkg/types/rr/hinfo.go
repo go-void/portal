@@ -1,6 +1,9 @@
 package rr
 
-import "github.com/go-void/portal/pkg/pack"
+import (
+	"github.com/go-void/portal/pkg/compression"
+	"github.com/go-void/portal/pkg/pack"
+)
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.2
 type HINFO struct {
@@ -70,7 +73,7 @@ func (rr *HINFO) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *HINFO) Pack(buf []byte, offset int) (int, error) {
+func (rr *HINFO) Pack(buf []byte, offset int, _ compression.Map) (int, error) {
 	offset, err := pack.PackCharacterString(rr.CPU, buf, offset)
 	if err != nil {
 		return offset, err

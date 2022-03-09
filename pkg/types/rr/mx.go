@@ -3,6 +3,7 @@ package rr
 import (
 	"fmt"
 
+	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/labels"
 	"github.com/go-void/portal/pkg/pack"
 )
@@ -75,11 +76,11 @@ func (rr *MX) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *MX) Pack(buf []byte, offset int) (int, error) {
+func (rr *MX) Pack(buf []byte, offset int, comp compression.Map) (int, error) {
 	offset, err := pack.PackUint16(rr.Preference, buf, offset)
 	if err != nil {
 		return offset, err
 	}
 
-	return pack.PackDomainName(rr.Exchange, buf, offset)
+	return pack.PackDomainName(rr.Exchange, buf, offset, comp)
 }

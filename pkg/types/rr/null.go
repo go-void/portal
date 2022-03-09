@@ -1,5 +1,7 @@
 package rr
 
+import "github.com/go-void/portal/pkg/compression"
+
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.10
 type NULL struct {
 	H    Header
@@ -43,7 +45,7 @@ func (rr *NULL) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *NULL) Pack(data []byte, offset int) (int, error) {
+func (rr *NULL) Pack(data []byte, offset int, _ compression.Map) (int, error) {
 	// TODO (Techassi): Anything can be put in here. How do we pack that?
 	return offset, nil
 }

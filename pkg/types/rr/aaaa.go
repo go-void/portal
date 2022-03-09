@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/pack"
 )
 
@@ -61,6 +62,6 @@ func (rr *AAAA) Unpack(data []byte, offset int) (int, error) {
 	return offset, nil
 }
 
-func (rr *AAAA) Pack(buf []byte, offset int) (int, error) {
+func (rr *AAAA) Pack(buf []byte, offset int, _ compression.Map) (int, error) {
 	return pack.PackIPAddress(rr.Address, buf, offset)
 }
