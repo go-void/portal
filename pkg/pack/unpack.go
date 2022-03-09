@@ -78,9 +78,11 @@ func UnpackDomainName(data []byte, offset int) (string, int, error) {
 		return ".", offset + 1, nil
 	}
 
-	var offsetBeforePtr = 0
-	var followed bool
-	var buf []byte
+	var (
+		initialOffset int
+		followed      bool
+		buf           []byte
+	)
 
 	for done := false; !done; {
 		b := int(data[offset])
@@ -111,7 +113,7 @@ func UnpackDomainName(data []byte, offset int) (string, int, error) {
 			}
 
 			if !followed {
-				offsetBeforePtr = offset + 1
+				initialOffset = offset + 1
 			}
 
 			offset = (b^0xC0)<<8 | int(data[offset])
@@ -120,7 +122,7 @@ func UnpackDomainName(data []byte, offset int) (string, int, error) {
 	}
 
 	if followed {
-		offset = offsetBeforePtr
+		offset = initialOffset
 	}
 
 	return string(buf), offset, nil

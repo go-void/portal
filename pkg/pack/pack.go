@@ -5,12 +5,13 @@ import (
 	"errors"
 	"net"
 
-	"github.com/go-void/portal/pkg/labels"
+	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/types/edns"
 )
 
 var (
-	ErrCharacterStringTooLong = errors.New("character string too long")
+	ErrCharacterStringTooLong = errors.New("pack: character string too long")
+	ErrInvalidName            = errors.New("pack: invalid name")
 )
 
 // PackUint8 packs a uint8 (one octet) into buf and returns the new offset
@@ -73,35 +74,55 @@ func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
 // TODO (Techassi): Implement message compression
 
 // PackDomainName packs a name into buf and returns the new offset.
-// Example: example.com => 7 101 120 97 109 112 108 101 3 99 111 109 0.
-// See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 <domain-name>
-func PackDomainName(name string, buf []byte, offset int) (int, error) {
-	l, ok := labels.FromBottom(name)
-	if !ok {
-		return len(buf), labels.ErrInvalidName
-	}
+func PackDomainName(name string, buf []byte, offset int, comp compression.Map) (int, error) {
+	length := len(name)
+	dot := false
+	pos := 0
 
-	for i := 0; i < len(l); i++ {
-		label := l[i]
-		switch label {
-		case "", ".":
-			break
-		default:
-			buf[offset] = uint8(len(label))
+	for i := 0; i < length; i++ {
+		b := name[i]
+		switch {
+		case b == '.':
+			// Two dots after each other are invalid, return
+			if dot {
+				return len(buf), ErrInvalidName
+			}
+			dot = true
+
+			// If name is root, break
+			if i == 0 {
+				break
+			}
+
+			// TODO (Techassi): Add overflow check
+
+			// TODO (Techassi): Handle compression
+			comp.Set(name[pos:i], offset)
+
+			// Append the label length to the buffer
+			labelLength := i - pos
+			buf[offset] = byte(labelLength)
 			offset++
 
-			for l := 0; l < len(label); l++ {
-				buf[offset] = label[l]
-				offset++
-			}
-			continue
-		}
+			// Add individual bytes of the label to the buffer
+			copy(buf[offset:], name[pos:i])
 
-		buf[offset] = 0x0
-		offset++
+			// Update offset and position
+			offset += labelLength
+			pos = i + 1
+		case b == '-',
+			b >= 0x30 && b <= 0x39, // ASCII 0-9
+			b >= 0x41 && b <= 0x5A, // ASCII A-Z
+			b >= 0x61 && b <= 0x7A: // ASCII a-z
+			dot = false
+		default:
+			return len(buf), ErrInvalidName
+		}
 	}
 
-	return offset, nil
+	// We packed the complete name, add null byte
+	buf[offset] = 0x0
+	return offset + 1, nil
 }
 
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 <character-string>
@@ -122,6 +143,7 @@ func PackCharacterString(characters string, buf []byte, offset int) (int, error)
 	return offset, nil
 }
 
+// PackEDNSOptions packs all EDNS options into buf and returns the new offset
 func PackEDNSOptions(options []edns.Option, buf []byte, offset int) (int, error) {
 	for _, option := range options {
 		o, err := PackUint16(option.Code(), buf, offset)
