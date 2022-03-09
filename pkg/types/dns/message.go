@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/constants"
 	"github.com/go-void/portal/pkg/labels"
 	"github.com/go-void/portal/pkg/types/rr"
@@ -19,13 +20,21 @@ type Message struct {
 
 	// Compression keeps track of compression pointers
 	// and domain names
-	Compression CompressionMap
+	Compression compression.Map
 }
 
 // NewMessage returns a new empty (default value) DNS message
 func NewMessage() *Message {
 	return &Message{
-		Compression: NewCompressionMap(),
+		Compression: compression.New(),
+	}
+}
+
+// NewMessageWith returns a new empty (default value) DNS message with the provided header
+func NewMessageWith(h Header) *Message {
+	return &Message{
+		Compression: compression.New(),
+		Header:      h,
 	}
 }
 

@@ -42,6 +42,20 @@ type RawHeader struct {
 	ARCount uint16 // ARCOUNT
 }
 
+func NewHeader(id uint16) Header {
+	return Header{
+		ID:                 id,
+		IsQuery:            true,
+		OpCode:             opcode.Query,
+		Authoritative:      false,
+		Truncated:          false,
+		RecursionDesired:   true,
+		RecursionAvailable: false,
+		Zero:               false,
+		RCode:              rcode.NoError,
+	}
+}
+
 // ToHeader converts a raw header to a header by applying
 // bitmasks to split DNS header flags
 func (h *RawHeader) ToHeader() Header {

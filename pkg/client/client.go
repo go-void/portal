@@ -14,8 +14,6 @@ import (
 	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/types/dns"
-	"github.com/go-void/portal/pkg/types/opcode"
-	"github.com/go-void/portal/pkg/types/rcode"
 	"github.com/go-void/portal/pkg/utils"
 
 	"golang.org/x/net/ipv4"
@@ -116,8 +114,8 @@ func (c *Client) Dial(network string, ip net.IP) (net.Conn, error) {
 // Query sends a DNS query for 'name' with 'class' and 'type' to the remote DNS server with 'ip' and returns the answer
 // message and any encountered error
 func (c *Client) Query(name string, class, t uint16, ip net.IP) (*dns.Message, error) {
-	header := c.CreateHeader()
-	query := c.CreateMessage(header)
+	header := dns.NewHeader(c.GetID())
+	query := dns.NewMessageWith(header)
 
 	query.AddQuestion(dns.Question{
 		Name:  name,
@@ -196,28 +194,6 @@ func (c *Client) QueryTCP(query *dns.Message, ip net.IP) (*dns.Message, error) {
 	}
 
 	return nil, nil
-}
-
-// CreateMessage creates a new DNS message with a header
-func (c *Client) CreateMessage(header dns.Header) *dns.Message {
-	return &dns.Message{
-		Header: header,
-	}
-}
-
-// CreateHeader returns a new DNS message header
-func (c *Client) CreateHeader() dns.Header {
-	return dns.Header{
-		ID:                 c.GetID(),
-		IsQuery:            true,
-		OpCode:             opcode.Query,
-		Authoritative:      false,
-		Truncated:          false,
-		RecursionDesired:   true,
-		RecursionAvailable: false,
-		Zero:               false,
-		RCode:              rcode.NoError,
-	}
 }
 
 // GetID returns the current header ID and generates a new one
