@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"net"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/go-void/portal/pkg/logger"
 	"github.com/go-void/portal/pkg/packers"
 	"github.com/go-void/portal/pkg/types/dns"
-	"github.com/go-void/portal/pkg/utils"
 
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
@@ -97,9 +97,8 @@ func (c *Client) Configure(opts ...OptionFunc) error {
 	return nil
 }
 
-func (c *Client) Dial(network string, ip net.IP) (net.Conn, error) {
-	address := utils.DNSAddress(ip)
-	conn, err := net.DialTimeout(network, address, c.dialTimeout)
+func (c *Client) Dial(network string, addr netip.AddrPort) (net.Conn, error) {
+	conn, err := net.DialTimeout(network, addr.String(), c.dialTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +112,7 @@ func (c *Client) Dial(network string, ip net.IP) (net.Conn, error) {
 
 // Query sends a DNS query for 'name' with 'class' and 'type' to the remote DNS server with 'ip' and returns the answer
 // message and any encountered error
-func (c *Client) Query(name string, class, t uint16, ip net.IP) (*dns.Message, error) {
+func (c *Client) Query(name string, class, t uint16, addr netip.Addr) (*dns.Message, error) {
 	header := dns.NewHeader(c.GetID())
 	query := dns.NewMessageWith(header)
 
@@ -125,16 +124,16 @@ func (c *Client) Query(name string, class, t uint16, ip net.IP) (*dns.Message, e
 
 	switch c.network {
 	case "udp", "udp4", "udp6":
-		return c.QueryUDP(query, ip)
+		return c.QueryUDP(query, netip.AddrPortFrom(addr, 53))
 	}
 
 	return nil, ErrInvalidNetwork
 }
 
 // QueryUDP sends a DNS 'query' to a remote DNS server with 'ip' using UDP
-func (c *Client) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, error) {
+func (c *Client) QueryUDP(query *dns.Message, addrPort netip.AddrPort) (*dns.Message, error) {
 	// Establish UDP connection
-	conn, err := c.Dial(c.network, ip)
+	conn, err := c.Dial(c.network, addrPort)
 	if err != nil {
 		return nil, err
 	}
@@ -175,8 +174,8 @@ func (c *Client) QueryUDP(query *dns.Message, ip net.IP) (*dns.Message, error) {
 }
 
 // QueryTCP sends a DNS 'query' to target DNS server with 'ip' using TCP
-func (c *Client) QueryTCP(query *dns.Message, ip net.IP) (*dns.Message, error) {
-	conn, err := c.Dial(c.network, ip)
+func (c *Client) QueryTCP(query *dns.Message, addrPort netip.AddrPort) (*dns.Message, error) {
+	conn, err := c.Dial(c.network, addrPort)
 	if err != nil {
 		return nil, err
 	}

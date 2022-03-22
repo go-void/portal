@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
+	"net/netip"
 
 	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/types/edns"
@@ -45,27 +46,28 @@ func PackUint32(data uint32, buf []byte, offset int) (int, error) {
 }
 
 // PackIPAddress packs a IP address (v4 or v6) into buf and returns the new offset
-func PackIPAddress(ip net.IP, buf []byte, offset int) (int, error) {
-	if i := ip.To4(); i != nil {
+func PackIPAddress(addr netip.Addr, buf []byte, offset int) (int, error) {
+	if addr.Is4() {
 		if offset+net.IPv4len > len(buf) {
 			return len(buf), ErrOverflowPackIPv4
 		}
-
-		ipAsUint32 := binary.BigEndian.Uint32(i)
-		binary.BigEndian.PutUint32(buf[offset:], ipAsUint32)
+		addrUint32 := binary.BigEndian.Uint32(addr.AsSlice())
+		binary.BigEndian.PutUint32(buf[offset:], addrUint32)
 		return offset + 4, nil
 	}
 
 	if offset+net.IPv6len > len(buf) {
-		return len(buf), ErrOverfloPpackIPv6
+		return len(buf), ErrOverflowpackIPv6
 	}
 
-	i := binary.BigEndian.Uint64(ip[:8])
-	binary.BigEndian.PutUint64(buf[offset:], i)
+	addrSlice := addr.AsSlice()
+
+	addrUint64 := binary.BigEndian.Uint64(addrSlice[:8])
+	binary.BigEndian.PutUint64(buf[offset:], addrUint64)
 	offset += 8
 
-	i = binary.BigEndian.Uint64(ip[8:])
-	binary.BigEndian.PutUint64(buf[offset:], i)
+	addrUint64 = binary.BigEndian.Uint64(addrSlice[8:])
+	binary.BigEndian.PutUint64(buf[offset:], addrUint64)
 
 	return offset + 8, nil
 }

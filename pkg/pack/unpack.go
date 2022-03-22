@@ -2,7 +2,7 @@ package pack
 
 import (
 	"encoding/binary"
-	"net"
+	"net/netip"
 
 	"github.com/go-void/portal/pkg/types/edns"
 )
@@ -40,30 +40,31 @@ func UnpackUint64(data []byte, offset int) (uint64, int, error) {
 }
 
 // UnpackIPv4Address unpacks a IPv4 address and returns the new offset
-func UnpackIPv4Address(data []byte, offset int) (net.IP, int, error) {
+func UnpackIPv4Address(data []byte, offset int) (netip.Addr, int, error) {
 	if offset+4 > len(data) {
-		return net.IP{}, len(data), ErrOverflowUnpackIPv4
+		return netip.Addr{}, len(data), ErrOverflowUnpackIPv4
 	}
-	return net.IPv4(data[offset], data[offset+1], data[offset+2], data[offset+3]), offset + 4, nil
+
+	addr, ok := netip.AddrFromSlice(data[offset : offset+4])
+	if !ok {
+		return addr, len(data), ErrOverflowUnpackIPv4
+	}
+
+	return addr, offset + 4, nil
 }
 
 // UnpackIPv6Address unpacks a IPv6 address and returns the new offset
-func UnpackIPv6Address(data []byte, offset int) (net.IP, int, error) {
-	hi, offset, err := UnpackUint64(data, offset)
-	if err != nil {
-		return net.IP{}, len(data), ErrOverflowUnpackIPv6
+func UnpackIPv6Address(data []byte, offset int) (netip.Addr, int, error) {
+	if offset+16 > len(data) {
+		return netip.Addr{}, len(data), ErrOverflowpackIPv6
 	}
 
-	lo, offset, err := UnpackUint64(data, offset)
-	if err != nil {
-		return net.IP{}, len(data), ErrOverflowUnpackIPv6
+	addr, ok := netip.AddrFromSlice(data[offset : offset+16])
+	if !ok {
+		return addr, len(data), ErrOverflowUnpackIPv4
 	}
 
-	ip := make(net.IP, net.IPv6len)
-	binary.BigEndian.PutUint64(ip, hi)
-	binary.BigEndian.PutUint64(ip[8:], lo)
-
-	return ip, offset, nil
+	return addr, offset + 16, nil
 }
 
 // UnpackDomainName unoacks a domain name in a DNS question or in a RR header

@@ -2,7 +2,7 @@ package rr
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 
 	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/pack"
@@ -11,7 +11,7 @@ import (
 // See https://datatracker.ietf.org/doc/html/rfc3596
 type AAAA struct {
 	H       Header
-	Address net.IP
+	Address netip.Addr
 }
 
 func (rr *AAAA) Header() *Header {
@@ -27,7 +27,7 @@ func (rr *AAAA) SetData(data ...interface{}) error {
 		return ErrInvalidRRData
 	}
 
-	addr, ok := data[0].(net.IP)
+	addr, ok := data[0].(netip.Addr)
 	if !ok {
 		return ErrFailedToConvertRRData
 	}
@@ -49,7 +49,7 @@ func (rr *AAAA) IsSame(o RR) bool {
 		return false
 	}
 
-	return rr.Address.Equal(other.Address)
+	return rr.Address == other.Address
 }
 
 func (rr *AAAA) Unpack(data []byte, offset int) (int, error) {

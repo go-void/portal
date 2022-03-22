@@ -63,8 +63,9 @@ func (s *Server) serveTCP() {
 
 // handleTCP handles name matching and returns a response message via TCP
 func (s *Server) handleTCP(message *dns.Message, conn *net.TCPConn) {
+	// NOTE (Techassi): This is a little ugly
 	addr := conn.RemoteAddr().(*net.TCPAddr)
-	message, err := s.handle(message, addr.IP)
+	message, err := s.handle(message, addr.AddrPort())
 	if err != nil {
 		s.Logger.Error(logger.ErrHandleRequest,
 			zap.String("context", "server"),

@@ -1,9 +1,8 @@
 package rr
 
 import (
-	"encoding/binary"
 	"fmt"
-	"net"
+	"net/netip"
 
 	"github.com/go-void/portal/pkg/compression"
 	"github.com/go-void/portal/pkg/pack"
@@ -12,7 +11,7 @@ import (
 // See https://datatracker.ietf.org/doc/html/rfc1035#section-3.4.1
 type A struct {
 	H       Header
-	Address net.IP
+	Address netip.Addr
 }
 
 func (rr *A) Header() *Header {
@@ -28,7 +27,7 @@ func (rr *A) SetData(data ...interface{}) error {
 		return ErrInvalidRRData
 	}
 
-	addr, ok := data[0].(net.IP)
+	addr, ok := data[0].(netip.Addr)
 	if !ok {
 		return ErrFailedToConvertRRData
 	}
@@ -50,7 +49,7 @@ func (rr *A) IsSame(o RR) bool {
 		return false
 	}
 
-	return rr.Address.Equal(other.Address)
+	return rr.Address == other.Address
 }
 
 func (rr *A) Unpack(data []byte, offset int) (int, error) {
@@ -64,7 +63,5 @@ func (rr *A) Unpack(data []byte, offset int) (int, error) {
 }
 
 func (rr *A) Pack(buf []byte, offset int, _ compression.Map) (int, error) {
-	ip := binary.BigEndian.Uint32(rr.Address[12:16])
-	binary.BigEndian.PutUint32(buf[offset:], ip)
-	return offset + 4, nil
+	return pack.PackIPAddress(rr.Address, buf, offset)
 }

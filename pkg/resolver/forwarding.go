@@ -2,7 +2,7 @@ package resolver
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 
 	"github.com/go-void/portal/pkg/cache"
 	"github.com/go-void/portal/pkg/client"
@@ -13,8 +13,7 @@ import (
 )
 
 type ForwardingResolver struct {
-	// client is a DNS client which sends queries to
-	// external DNS servers
+	// client is a DNS client which sends queries to external DNS servers
 	client *client.Client
 
 	// Access to the cache instance
@@ -23,9 +22,8 @@ type ForwardingResolver struct {
 	// Access to the logger instance
 	logger *logger.Logger
 
-	// upstream is a IP address of a upstream DNS
-	// server
-	upstream net.IP
+	// upstream is a IP address of a upstream DNS server
+	upstream netip.Addr
 
 	maxExpired int
 
@@ -35,9 +33,9 @@ type ForwardingResolver struct {
 // NewForwardingResolver returns a new forwarding resolver
 func NewForwardingResolver(cfg config.ResolverOptions, c cache.Cache, l *logger.Logger) *ForwardingResolver {
 	return &ForwardingResolver{
-		client:       client.New(l),
-		upstream:     net.ParseIP(cfg.RawUpstream),
 		cacheEnabled: cfg.CacheEnabled,
+		client:       client.New(l),
+		upstream:     cfg.Upstream,
 		maxExpired:   300,
 		cache:        c,
 		logger:       l,

@@ -56,7 +56,7 @@ func (s *Server) serveUDP() {
 
 // handleUDP handles name matching and returns a response message via UDP
 func (s *Server) handleUDP(message *dns.Message, session dns.Session) {
-	message, err := s.handle(message, session.Address.IP)
+	message, err := s.handle(message, session.AddrPort)
 	if err != nil {
 		s.Logger.Error(logger.ErrHandleRequest,
 			zap.String("context", "server"),
@@ -74,7 +74,7 @@ func (s *Server) readUDP() ([]byte, dns.Session, error) {
 	rm := s.messageList.Get().([]byte)
 	mn, session, err := s.Reader.ReadUDP(s.UDPListener, rm)
 	if err != nil {
-		s.messageList.Put(rm)
+		s.messageList.Put(&rm)
 		return nil, session, err
 	}
 	return rm[:mn], session, nil
@@ -94,7 +94,7 @@ func (s *Server) writeUDP(message *dns.Message, session dns.Session) {
 		return
 	}
 
-	err = s.Writer.WriteUDP(s.UDPListener, b, session.Address)
+	err = s.Writer.WriteUDP(s.UDPListener, b, session.AddrPort)
 	if err != nil {
 		s.Logger.Error(logger.ErrUDPWrite,
 			zap.String("context", "server"),

@@ -3,17 +3,18 @@ package dio
 import (
 	"encoding/binary"
 	"net"
+	"net/netip"
 )
 
 // Writer describes an interface which allows to write DNS messages (byte slices) back to a client via UDP and TCP
 type Writer interface {
 	// WriteUDPClose writes a byte slice back to a client with
 	// 'addr' via the provided UDP conn and closes it afterwards
-	WriteUDPClose(*net.UDPConn, []byte, *net.UDPAddr) error
+	WriteUDPClose(*net.UDPConn, []byte, netip.AddrPort) error
 
 	// WriteUDP writes a byte slice back to a client with
 	// 'addr' via the provided UDP conn
-	WriteUDP(*net.UDPConn, []byte, *net.UDPAddr) error
+	WriteUDP(*net.UDPConn, []byte, netip.AddrPort) error
 
 	// WriteTCPClose writes a byte slice back to a client with
 	// 'addr' via the provided TCP conn and closes it afterwards
@@ -34,8 +35,8 @@ func NewDefaultWriter() *DefaultWriter {
 }
 
 // WriteUDPClose writes a byte slice back to a client with 'addr' via the provided UDP conn and closes it afterwards
-func (w *DefaultWriter) WriteUDPClose(conn *net.UDPConn, buf []byte, addr *net.UDPAddr) error {
-	err := w.WriteUDP(conn, buf, addr)
+func (w *DefaultWriter) WriteUDPClose(conn *net.UDPConn, buf []byte, addrPort netip.AddrPort) error {
+	err := w.WriteUDP(conn, buf, addrPort)
 	if err != nil {
 		return err
 	}
@@ -43,8 +44,8 @@ func (w *DefaultWriter) WriteUDPClose(conn *net.UDPConn, buf []byte, addr *net.U
 }
 
 // WriteUDP writes a byte slice back to a client with 'addr' via the provided UDP conn
-func (w *DefaultWriter) WriteUDP(conn *net.UDPConn, buf []byte, addr *net.UDPAddr) error {
-	_, err := conn.WriteToUDP(buf, addr)
+func (w *DefaultWriter) WriteUDP(conn *net.UDPConn, buf []byte, addrPort netip.AddrPort) error {
+	_, err := conn.WriteToUDPAddrPort(buf, addrPort)
 	if err != nil {
 		return err
 	}

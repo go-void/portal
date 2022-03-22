@@ -2,7 +2,7 @@ package resolver
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"sync"
 
 	"github.com/go-void/portal/pkg/cache"
@@ -27,7 +27,7 @@ type RecursiveResolver struct {
 	maxExpired int
 
 	// hints is a slice of root DNS server hints
-	hints []net.IP
+	hints []netip.Addr
 
 	// hintIndex keeps track of which root server should
 	// be used. It is a simple round-robin algorithm
@@ -40,9 +40,9 @@ type RecursiveResolver struct {
 // NewRecursiveResolver returns a new recursive resolver
 func NewRecursiveResolver(cfg config.ResolverOptions, c cache.Cache, l *logger.Logger) *RecursiveResolver {
 	// TODO (Techassi): Read in hints
-	hints := []net.IP{
-		net.ParseIP("198.41.0.4"),
-		net.ParseIP("199.9.14.201"),
+	hints := []netip.Addr{
+		netip.AddrFrom4([4]byte{198, 41, 0, 4}),
+		netip.AddrFrom4([4]byte{199, 9, 14, 201}),
 	}
 
 	return &RecursiveResolver{
@@ -142,7 +142,7 @@ func (r *RecursiveResolver) Refresh(name string, class, t uint16) {
 }
 
 // Hint returns a root hint
-func (r *RecursiveResolver) Hint() net.IP {
+func (r *RecursiveResolver) Hint() netip.Addr {
 	r.lock.Lock()
 
 	if r.hintIndex == len(r.hints)-1 {
@@ -182,7 +182,7 @@ func (r *RecursiveResolver) LookupInCache(name string, class, t uint16) ([]rr.RR
 
 // NOTE (Techassi): Should we be able to return multiple IPs here?
 // FindGlue tries to find glue records for provided authoriative DNS servers
-func (r *RecursiveResolver) FindGlue(response *dns.Message, class, t uint16) (net.IP, error) {
+func (r *RecursiveResolver) FindGlue(response *dns.Message, class, t uint16) (netip.Addr, error) {
 	for _, nsrr := range response.Authority {
 		ns, ok := nsrr.(*rr.NS)
 		if !ok {
@@ -198,7 +198,7 @@ func (r *RecursiveResolver) FindGlue(response *dns.Message, class, t uint16) (ne
 				continue
 			}
 
-			var ip net.IP
+			var ip netip.Addr
 
 			switch adrr.Header().Type {
 			case rr.TypeA:
@@ -232,5 +232,5 @@ func (r *RecursiveResolver) FindGlue(response *dns.Message, class, t uint16) (ne
 		return ip, nil
 	}
 
-	return nil, ErrFatal
+	return netip.Addr{}, ErrFatal
 }

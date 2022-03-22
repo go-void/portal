@@ -2,7 +2,7 @@ package config
 
 import (
 	"errors"
-	"net"
+	"net/netip"
 	"os"
 
 	"github.com/go-void/portal/pkg/constants"
@@ -28,6 +28,7 @@ type Config struct {
 	Resolver  ResolverOptions  `toml:"resolver"`
 	Filter    FilterOptions    `toml:"filter"`
 	Server    ServerOptions    `toml:"server"`
+	Store     StoreOptions     `toml:"store"`
 	Log       LogOptions       `toml:"log"`
 }
 
@@ -42,12 +43,12 @@ type CollectorOptions struct {
 
 // ResolverOptions specifies available resolver config options
 type ResolverOptions struct {
-	CacheEnabled bool   `toml:"cache_enabled"`
-	RawUpstream  string `toml:"upstream"`
-	MaxExpire    int    `toml:"max_expire"`
-	Upstream     net.IP `toml:"-"`
-	HintPath     string `toml:"hint_path"`
-	Mode         string `toml:"mode"`
+	CacheEnabled bool       `toml:"cache_enabled"`
+	RawUpstream  string     `toml:"upstream"`
+	MaxExpire    int        `toml:"max_expire"`
+	Upstream     netip.Addr `toml:"-"`
+	HintPath     string     `toml:"hint_path"`
+	Mode         string     `toml:"mode"`
 }
 
 // FilterOptions specifies available filter config options
@@ -58,11 +59,19 @@ type FilterOptions struct {
 
 // ServerOptions specifies available server config options
 type ServerOptions struct {
-	CacheEnabled bool   `toml:"cache_enabled"`
-	RawAddress   string `toml:"address"`
-	Address      net.IP `toml:"-"`
-	Network      string `toml:"network"`
-	Port         int    `toml:"port"`
+	CacheEnabled bool           `toml:"cache_enabled"`
+	Address      string         `toml:"address"`
+	AddrPort     netip.AddrPort `toml:"-"`
+	Network      string         `toml:"network"`
+}
+
+type StoreOptions struct {
+	Username string `toml:"username"`
+	Password string `toml:"password"`
+	Database string `toml:"database"`
+	Backend  string `toml:"backend"`
+	Host     string `toml:"host"`
+	Port     int    `toml:"port"`
 }
 
 // LogOptions specifies available log config options
@@ -73,8 +82,7 @@ type LogOptions struct {
 	Outputs []string `toml:"outputs"`
 }
 
-// Read reads a TOML config file and returns a Config or any error encountered
-// while reading
+// Read reads a TOML config file and returns a Config or any error encountered while reading
 func Read(path string) (*Config, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -88,8 +96,7 @@ func Read(path string) (*Config, error) {
 	return c, err
 }
 
-// Write writes a TOML config to path and returns any error encountered while
-// writing
+// Write writes a TOML config to path and returns any error encountered while writing
 func Write(path string, c *Config) error {
 	f, err := os.Open(path)
 	if err != nil {
@@ -105,9 +112,8 @@ func Default() *Config {
 	return &Config{
 		Server: ServerOptions{
 			CacheEnabled: true,
-			Address:      net.ParseIP("127.0.0.1"),
+			Address:      "127.0.0.1:53",
 			Network:      "udp",
-			Port:         53,
 		},
 		Resolver: ResolverOptions{
 			CacheEnabled: true,
@@ -135,12 +141,13 @@ func Default() *Config {
 	}
 }
 
+// Validate validates the config and returns an error if the config is not valid
 func (c *Config) Validate() error {
-	aip := net.ParseIP(c.Server.RawAddress)
-	if aip == nil {
+	addrPort, err := netip.ParseAddrPort(c.Server.Address)
+	if err != nil {
 		return ErrInvalidServerAddress
 	}
-	c.Server.Address = aip
+	c.Server.AddrPort = addrPort
 
 	if utils.NotIn(c.Server.Network, []string{"udp", "udp4", "udp6", "tcp", "tcp4", "tcp6"}) {
 		return ErrInvalidServerNetwork
@@ -151,11 +158,11 @@ func (c *Config) Validate() error {
 	}
 
 	if c.Resolver.Mode == "f" {
-		uip := net.ParseIP(c.Resolver.RawUpstream)
-		if c.Resolver.RawUpstream == "" || uip == nil {
+		addr, err := netip.ParseAddr(c.Resolver.RawUpstream)
+		if err != nil {
 			return ErrInvalidResolverUpstream
 		}
-		c.Resolver.Upstream = uip
+		c.Resolver.Upstream = addr
 	}
 
 	if c.Collector.Enabled && utils.NotIn(c.Collector.Backend, []string{"default", "mysql", "mariadb"}) {
@@ -169,11 +176,8 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// Defaults sets sane defaults in the config
 func (c *Config) Defaults() {
-	if c.Server.Port <= 0 {
-		c.Server.Port = 53
-	}
-
 	if c.Collector.MaxEntries <= 0 {
 		c.Collector.MaxEntries = constants.CollectorDefaultMaxEntries
 	}

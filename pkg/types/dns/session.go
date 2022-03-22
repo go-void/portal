@@ -1,9 +1,11 @@
 package dns
 
-import "net"
+import (
+	"net/netip"
+)
 
 // Session holds the remote IP address, remote port and optional additional data of a UDP "connection"
 type Session struct {
-	Address    *net.UDPAddr
+	AddrPort   netip.AddrPort
 	Additional []byte
 }
